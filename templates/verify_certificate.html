@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Verify Certificate - Kumbh Smart Seva{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-lg">
+                <div style="background: linear-gradient(135deg, #FF9500 0%, #FFFFFF 50%, #138808 100%); padding: 30px; color: white; text-align: center; border-radius: 8px 8px 0 0;">
+                    <h1 class="mb-2">
+                        <i class="fas fa-check-double"></i> Verify Certificate
+                    </h1>
+                    <p class="mb-0">Authenticate a Kumbh pilgrimage certificate</p>
+                </div>
+                
+                <div class="card-body p-4">
+                    <!-- Verification Form -->
+                    <form id="verifyForm" class="mb-4">
+                        <div class="mb-3">
+                            <label for="certificateId" class="form-label">Certificate ID or QR Code</label>
+                            <input type="text" class="form-control" id="certificateId" 
+                                   placeholder="Enter certificate ID (e.g., ABC12D34)" required>
+                            <small class="text-muted">Or scan the QR code from the certificate</small>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search"></i> Verify Certificate
+                        </button>
+                    </form>
+                    
+                    <!-- Results -->
+                    <div id="results" style="display: none;">
+                        <!-- Valid Certificate -->
+                        <div id="validResult" style="display: none;">
+                            <div class="alert alert-success" role="alert">
+                                <h4 class="alert-heading">
+                                    <i class="fas fa-check-circle"></i> Certificate Verified
+                                </h4>
+                                <hr>
+                                <p><strong>Status:</strong> <span class="badge bg-success">Valid</span></p>
+                            </div>
+                            
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">Certificate Details</h6>
+                                </div>
+                                <div class="card-body" id="certDetails">
+                                    <!-- Details will be populated here -->
+                                </div>
+                            </div>
+                            
+                            <a href="/generate-certificate" class="btn btn-primary w-100">
+                                <i class="fas fa-certificate"></i> Generate Your Certificate
+                            </a>
+                        </div>
+                        
+                        <!-- Invalid Certificate -->
+                        <div id="invalidResult" style="display: none;">
+                            <div class="alert alert-danger" role="alert">
+                                <h4 class="alert-heading">
+                                    <i class="fas fa-times-circle"></i> Certificate Not Found
+                                </h4>
+                                <hr>
+                                <p>This certificate could not be verified. Please check the certificate ID and try again.</p>
+                            </div>
+                            
+                            <a href="/generate-certificate" class="btn btn-primary w-100">
+                                <i class="fas fa-certificate"></i> Generate Your Certificate
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('verifyForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const certId = document.getElementById('certificateId').value.trim();
+    
+    try {
+        const response = await fetch('/api/certificate/verify', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ certificate_id: certId })
+        });
+        
+        const data = await response.json();
+        const resultsDiv = document.getElementById('results');
+        const validDiv = document.getElementById('validResult');
+        const invalidDiv = document.getElementById('invalidResult');
+        
+        resultsDiv.style.display = 'block';
+        
+        if (data.valid && data.certificate) {
+            validDiv.style.display = 'block';
+            invalidDiv.style.display = 'none';
+            
+            const cert = data.certificate;
+            const detailsDiv = document.getElementById('certDetails');
+            detailsDiv.innerHTML = `
+                <p><strong>Name:</strong> ${cert.full_name}</p>
+                <p><strong>Location:</strong> ${cert.location_name}</p>
+                <p><strong>Visit Date:</strong> ${cert.visit_date}</p>
+                <p><strong>Certificate ID:</strong> <code>${cert.certificate_id}</code></p>
+                ${cert.email ? `<p><strong>Email:</strong> ${cert.email}</p>` : ''}
+                ${cert.phone ? `<p><strong>Phone:</strong> ${cert.phone}</p>` : ''}
+                <p><strong>Issued:</strong> ${new Date(cert.created_at).toLocaleString()}</p>
+            `;
+        } else {
+            validDiv.style.display = 'none';
+            invalidDiv.style.display = 'block';
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+});
+
+// If result already exists from template
+{% if result.valid and result.certificate %}
+document.getElementById('certificateId').value = '{{ result.certificate.certificate_id }}';
+document.getElementById('verifyForm').dispatchEvent(new Event('submit'));
+{% endif %}
+</script>
+
+<style>
+.form-label {
+    font-weight: 600;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #FF9500 0%, #138808 100%);
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #E68400 0%, #0D6B06 100%);
+}
+</style>
+{% endblock %}

@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Login - Kumbh Smart Seva{% endblock %}
+
+{% block content %}
+<div class="container py-5 min-vh-100 d-flex align-items-center">
+    <div class="row w-100 justify-content-center">
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-lg">
+                <div style="background: linear-gradient(135deg, #FF9500 0%, #FFFFFF 50%, #138808 100%); padding: 30px; color: white; text-align: center; border-radius: 8px 8px 0 0;">
+                    <h1 class="mb-0">
+                        <i class="fas fa-user-shield"></i> Admin Portal
+                    </h1>
+                    <p class="mb-0 mt-2">Volunteer & Supervisor Access</p>
+                </div>
+                
+                <div class="card-body p-4">
+                    <!-- Flash Messages -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control form-control-lg" id="email" name="email" 
+                                   placeholder="your@email.com" required>
+                            <small class="text-muted">Your registered admin email</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control form-control-lg" id="password" name="password" 
+                                   placeholder="••••••••" required>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                            <label class="form-check-label" for="remember">
+                                Remember me
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-lg w-100 mb-3">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </button>
+                    </form>
+                    
+                    <hr class="my-3">
+                    
+                    <!-- Info Section -->
+                    <div class="alert alert-info mb-0">
+                        <small>
+                            <strong>Roles:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li><strong>Admin:</strong> Full system access</li>
+                                <li><strong>Supervisor:</strong> Manage volunteers & reports</li>
+                                <li><strong>Volunteer:</strong> Location monitoring</li>
+                            </ul>
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="card-footer text-center bg-light">
+                    <small>Need help? Contact your supervisor or administrator</small>
+                </div>
+            </div>
+            
+            <!-- Back to Home -->
+            <div class="text-center mt-3">
+                <a href="/" class="text-decoration-none">
+                    <i class="fas fa-home"></i> Back to Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-label {
+    font-weight: 600;
+    color: #333;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #FF9500;
+    box-shadow: 0 0 0 0.2rem rgba(255, 149, 0, 0.25);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #FF9500 0%, #138808 100%);
+    border: none;
+    font-weight: 600;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #E68400 0%, #0D6B06 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 149, 0, 0.3);
+}
+
+.min-vh-100 {
+    min-height: 100vh;
+}
+</style>
+{% endblock %}

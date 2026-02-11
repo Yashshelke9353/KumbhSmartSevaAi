@@ -1,0 +1,721 @@
+{% extends "base.html" %}
+
+{% block title %}Certificate #{{ certificate.certificate_id }} - Kumbh Smart Seva{% endblock %}
+
+{% block extra_css %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital@0;1&family=Cormorant+Garamond:wght@400;600;700&display=swap');
+
+.certificate-container {
+    animation: slideIn 0.8s ease-out;
+    perspective: 1000px;
+    max-width: 100%;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#certificateContainer {
+    background: linear-gradient(135deg, #f5f3f0 0%, #fffbf7 100%);
+    border: 3px solid #d4af37;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    position: relative;
+    overflow: hidden;
+    max-width: 100%;
+    margin: 0 auto;
+    page-break-after: avoid;
+}
+
+#certificateContainer::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 350px;
+    background: url('/static/cert_design/ramkund-bathing-timings-nashik-kumbh-mela.webp') center bottom / cover no-repeat;
+    opacity: 0.12;
+    z-index: 0;
+    pointer-events: none;
+}
+
+#certificateContainer::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 350px;
+    background: linear-gradient(to top, rgba(255, 149, 0, 0.15), transparent);
+    z-index: 0;
+    pointer-events: none;
+}
+
+.cert-header {
+    background: linear-gradient(90deg, #FF9500 0%, #FFFFFF 50%, #138808 100%);
+    height: 10px;
+    position: relative;
+}
+
+.cert-footer {
+    background: linear-gradient(90deg, #138808 0%, #FFFFFF 50%, #FF9500 100%);
+    height: 10px;
+}
+
+.cert-body {
+    padding: 40px 30px;
+    position: relative;
+    z-index: 2;
+    min-height: 650px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.logos-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    margin-bottom: 20px;
+    animation: fadeInDown 1s ease-out 0.2s both;
+}
+
+.gov-logo {
+    height: 80px;
+    width: auto;
+    object-fit: contain;
+}
+
+.kumbh-logo {
+    height: 80px;
+    width: auto;
+    object-fit: contain;
+}
+
+@keyframes rotateIn {
+    from {
+        opacity: 0;
+        transform: rotate(-180deg) scale(0.5);
+    }
+    to {
+        opacity: 1;
+        transform: rotate(0) scale(1);
+    }
+}
+
+.cert-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 38px;
+    font-weight: 700;
+    color: #138808;
+    margin: 10px 0;
+    letter-spacing: 2px;
+    animation: fadeInDown 1s ease-out 0.3s both;
+}
+
+.cert-divider {
+    width: 250px;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #d4af37, transparent);
+    margin: 10px auto;
+}
+
+.cert-preamble {
+    font-family: 'Crimson Text', serif;
+    font-size: 15px;
+    color: #555;
+    font-style: italic;
+    margin: 10px 0;
+    animation: fadeInUp 1s ease-out 0.5s both;
+}
+
+.cert-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px;
+    font-weight: 700;
+    color: #FF9500;
+    margin: 15px 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    animation: fadeInUp 1s ease-out 0.7s both;
+}
+
+.cert-details {
+    font-family: 'Crimson Text', serif;
+    font-size: 15px;
+    color: #555;
+    line-height: 1.6;
+    margin: 15px 0;
+    animation: fadeInUp 1s ease-out 0.9s both;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.qr-container {
+    margin: 15px 0;
+    animation: zoomIn 1.2s ease-out 1.1s both;
+    display: block;
+    visibility: visible;
+}
+
+@keyframes zoomIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.qr-code-box {
+    display: inline-block;
+    padding: 15px;
+    background: white;
+    border: 3px solid #d4af37;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.qr-code-box img {
+    width: 120px;
+    height: 120px;
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    visibility: visible;
+    opacity: 1;
+}
+
+.cert-disclaimer {
+    background: linear-gradient(135deg, #FFF8E7 0%, #FFF3E0 100%);
+    border-left: 5px solid #FF9500;
+    padding: 12px;
+    margin: 15px 0;
+    border-radius: 5px;
+    font-family: 'Crimson Text', serif;
+    font-size: 12px;
+    color: #666;
+    animation: fadeInUp 1s ease-out 1.3s both;
+}
+
+.cert-footer-text {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 2px solid #d4af37;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px;
+    color: #999;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 15px;
+    margin-top: 15px;
+    animation: fadeInUp 1s ease-out 1.5s both;
+}
+
+.action-buttons button {
+    flex: 1;
+    padding: 12px 20px;
+    font-weight: 600;
+    border: 2px solid #d4af37;
+    background: linear-gradient(135deg, #FF9500 0%, #138808 100%);
+    color: white;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    z-index: 10;
+}
+
+.action-buttons button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(255, 149, 0, 0.3);
+}
+
+.share-menu {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    margin-bottom: 10px;
+    background: white;
+    border: 2px solid #d4af37;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    z-index: 10000;
+    padding: 8px 0;
+    min-width: 200px;
+    white-space: nowrap;
+}
+
+.share-menu a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    color: #333;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.share-menu a:hover {
+    background: linear-gradient(135deg, #FFF8E7 0%, #FFF3E0 100%);
+    color: #FF9500;
+    padding-left: 20px;
+}
+
+@media print {
+    .action-buttons, .cert-details-card, .verify-section, body > nav {
+        display: none !important;
+    }
+    
+    #certificateContainer {
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+    }
+    
+    .qr-code-box img {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Celebration Animation Trigger -->
+            <div id="celebration" style="display:none;"></div>
+            
+            <!-- Certificate Card -->
+            <div class="certificate-container">
+                <div id="certificateContainer" class="card border-0">
+                    <!-- Certificate Header Tricolor -->
+                    <div class="cert-header"></div>
+                    
+                    <!-- Certificate Body -->
+                    <div class="cert-body text-center">
+                        <!-- Government Logos Section -->
+                        <div class="logos-section">
+                            <!-- Government Logo -->
+                            <img src="/static/cert_design/gov logo.png" alt="Government Logo" class="gov-logo">
+                            
+                            <!-- Nashik Kumbh Mela Logo -->
+                            <img src="/static/cert_design/nashik-kumbh-mela-logo.webp" alt="Nashik Kumbh Mela Logo" class="kumbh-logo">
+                        </div>
+                        
+                        <!-- Title -->
+                        <h1 class="cert-title">KUMBH PILGRIMAGE CERTIFICATE</h1>
+                        
+                        <!-- Decorative Divider -->
+                        <div class="cert-divider"></div>
+                        
+                        <!-- Preamble -->
+                        <p class="cert-preamble">
+                            This is to certify that
+                        </p>
+                        
+                        <!-- Name -->
+                        <div class="cert-name">{{ certificate.full_name }}</div>
+                        
+                        <!-- Details -->
+                        <div class="cert-details">
+                            has been blessed with a sacred pilgrimage visit to<br>
+                            <span style="font-size: 22px; color: #138808; font-weight: bold;">{{ certificate.location_name }}</span>
+                            <br><br>
+                            <span style="font-size: 16px;">Date of Pilgrimage: <strong>{{ certificate.visit_date }}</strong></span><br>
+                            <span style="font-size: 14px; color: #999;">Certificate Number: <strong style="color: #666;">{{ certificate.certificate_id }}</strong></span>
+                        </div>
+                        
+                        <!-- QR Code -->
+                        {% if certificate.qr_code_path %}
+                        <div class="qr-container text-center">
+                            <div class="qr-code-box">
+                                <img id="qrCodeImage" src="/static/uploads/qr_codes/{{ certificate.qr_code_path }}" alt="QR Code" style="display: block; visibility: visible;">
+                            </div>
+                            <p style="font-family: 'Crimson Text', serif; font-size: 12px; color: #999; margin-top: 10px;">
+                                Scan QR code to verify this certificate
+                            </p>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Disclaimer -->
+                        <div class="cert-disclaimer">
+                            <strong>Certificate Information:</strong> This digital certificate commemorates the holder's pilgrimage visit to Kumbh Mela. It is issued through Kumbh Smart Seva Platform and serves as a record of participation.
+                        </div>
+                        
+                        <!-- Footer -->
+                        <div class="cert-footer-text">
+                            <p style="margin: 0;">Issued on: {{ certificate.created_at }}</p>
+                            <p style="margin: 0;">Kumbh Smart Seva | Pilgrimage Experience Platform</p>
+                            <p style="margin: 0; margin-top: 10px; font-style: italic;">"Om Namah Shivaya"</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Certificate Footer Tricolor -->
+                    <div class="cert-footer"></div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="action-buttons mt-4">
+                    <button onclick="downloadPDF()" title="Download as Image">
+                        <i class="fas fa-download"></i> Download Image
+                    </button>
+                    <button onclick="printCertificate()" title="Print Certificate">
+                        <i class="fas fa-print"></i> Print
+                    </button>
+                    <button onclick="toggleShareMenu(event)" title="Share Certificate" style="position: relative;">
+                        <i class="fas fa-share-alt"></i> Share
+                        <div class="share-menu" id="shareMenu">
+                            <a href="#" onclick="shareOn('whatsapp'); return false;" title="Share on WhatsApp">
+                                <i class="fab fa-whatsapp"></i> WhatsApp
+                            </a>
+                            <a href="#" onclick="shareOn('facebook'); return false;" title="Share on Facebook">
+                                <i class="fab fa-facebook"></i> Facebook
+                            </a>
+                            <a href="#" onclick="shareOn('twitter'); return false;" title="Share on Twitter">
+                                <i class="fab fa-twitter"></i> Twitter
+                            </a>
+                            <a href="#" onclick="shareOn('email'); return false;" title="Share via Email">
+                                <i class="fas fa-envelope"></i> Email
+                            </a>
+                            <a href="#" onclick="copyToClipboard(); return false;" title="Copy Link">
+                                <i class="fas fa-link"></i> Copy Link
+                            </a>
+                        </div>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Certificate Details Card -->
+            <div class="card mt-5 border-0 shadow-sm cert-details-card">
+                <div class="card-header" style="background: linear-gradient(135deg, #FF9500 0%, #138808 100%); color: white;">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Certificate Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Full Name:</strong> {{ certificate.full_name }}</p>
+                            <p><strong>Location:</strong> {{ certificate.location_name }}</p>
+                            <p><strong>Visit Date:</strong> {{ certificate.visit_date }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Certificate ID:</strong> <code style="background: #f0f0f0; padding: 5px 10px; border-radius: 5px;">{{ certificate.certificate_id }}</code></p>
+                            <p><strong>Issued:</strong> {{ certificate.created_at }}</p>
+                            {% if certificate.email %}
+                            <p><strong>Email:</strong> {{ certificate.email }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Verify Section -->
+            <div class="alert mt-5 verify-section" style="background: linear-gradient(135deg, rgba(19, 136, 8, 0.1) 0%, rgba(0, 102, 204, 0.1) 100%); border-left: 5px solid #138808;">
+                <i class="fas fa-check-circle" style="color: #138808;"></i>
+                <strong style="color: #138808;">Verify This Certificate:</strong><br>
+                <p style="margin-top: 10px; margin-bottom: 0;">
+                    <a href="/certificate/verify/{{ certificate.certificate_id }}" target="_blank" style="color: #0066cc; text-decoration: none; font-weight: 600;">
+                        Click here to verify the authenticity of this certificate <i class="fas fa-external-link-alt"></i>
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/confetti-js@0.0.1/dist/index.min.js"></script>
+
+<script>
+// Celebration animation on page load
+window.addEventListener('load', () => {
+    triggerCelebration();
+});
+
+function triggerCelebration() {
+    const confettiScript = document.createElement('script');
+    confettiScript.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js';
+    document.head.appendChild(confettiScript);
+    
+    confettiScript.onload = () => {
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#FF9500', '#138808', '#d4af37', '#FFFFFF']
+        });
+    };
+}
+
+function downloadPDF() {
+    const cert = document.getElementById('certificateContainer');
+    const time = new Date().getTime();
+    
+    // Hide action buttons and other elements before rendering
+    const actionButtons = document.querySelector('.action-buttons');
+    const certDetailsCard = document.querySelector('.cert-details-card');
+    const verifySection = document.querySelector('.verify-section');
+    
+    const actionButtonsDisplay = actionButtons.style.display;
+    const certDetailsDisplay = certDetailsCard.style.display;
+    const verifySectionDisplay = verifySection.style.display;
+    
+    actionButtons.style.display = 'none';
+    certDetailsCard.style.display = 'none';
+    verifySection.style.display = 'none';
+    
+    // Show a loading indicator
+    const btn = event.target.closest('button');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+    btn.disabled = true;
+    
+    // Ensure QR code is visible
+    const qrImage = document.getElementById('qrCodeImage');
+    const qrDisplay = qrImage ? qrImage.style.display : '';
+    if(qrImage) {
+        qrImage.style.display = 'block';
+        qrImage.style.visibility = 'visible';
+        qrImage.style.opacity = '1';
+    }
+    
+    // Wait for all images to load
+    const images = cert.querySelectorAll('img');
+    const imagePromises = Array.from(images).map(img => {
+        return new Promise((resolve) => {
+            if(img.complete) {
+                console.log('Image already loaded:', img.src);
+                resolve();
+            } else {
+                console.log('Waiting for image:', img.src);
+                img.onload = () => {
+                    console.log('Image loaded:', img.src);
+                    resolve();
+                };
+                img.onerror = () => {
+                    console.log('Image failed to load:', img.src);
+                    resolve();
+                };
+                // Set a timeout to proceed even if image fails
+                setTimeout(() => {
+                    console.log('Image timeout:', img.src);
+                    resolve();
+                }, 3000);
+            }
+        });
+    });
+    
+    // Wait for fonts to load
+    Promise.all(imagePromises)
+        .then(() => {
+            console.log('All images loaded, waiting for rendering');
+            // Additional wait to ensure rendering
+            return new Promise(resolve => setTimeout(resolve, 1000));
+        })
+        .then(() => {
+            console.log('Starting html2canvas capture');
+            // Temporarily disable animations
+            const style = document.createElement('style');
+            style.innerHTML = `
+                * { animation: none !important; transition: none !important; }
+            `;
+            document.head.appendChild(style);
+            
+            return html2canvas(cert, {
+                scale: 4,
+                useCORS: true,
+                allowTaint: true,
+                logging: true,
+                backgroundColor: '#fffbf7',
+                letterRendering: true,
+                quality: 1,
+                windowHeight: cert.offsetHeight,
+                windowWidth: cert.offsetWidth,
+                imageTimeout: 15000,
+                ignoreElements: (element) => {
+                    return element.classList.contains('action-buttons') || 
+                           element.classList.contains('cert-details-card') ||
+                           element.classList.contains('verify-section');
+                }
+            });
+        })
+        .then(canvas => {
+            console.log('Canvas captured, converting to image');
+            const imageData = canvas.toDataURL('image/png');
+            
+            // Save to server
+            return fetch(`/certificate/{{ certificate.certificate_id }}/save-image`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    image_data: imageData
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Server response:', data);
+                if(data.success) {
+                    // Download to client device
+                    const link = document.createElement('a');
+                    link.href = imageData;
+                    link.download = `Kumbh_Certificate_{{ certificate.certificate_id }}_${time}.png`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    alert('✓ Certificate image downloaded and saved successfully!');
+                } else {
+                    throw new Error(data.error || 'Failed to save certificate');
+                }
+            });
+        })
+        .catch(err => {
+            console.error('Certificate generation error:', err);
+            
+            // Attempt local download even if server save fails
+            html2canvas(cert, {
+                scale: 4,
+                useCORS: true,
+                allowTaint: true,
+                logging: true,
+                backgroundColor: '#fffbf7',
+                letterRendering: true,
+                quality: 1
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.href = canvas.toDataURL('image/png');
+                link.download = `Kumbh_Certificate_{{ certificate.certificate_id }}_${time}.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                alert('Certificate downloaded locally (note: server backup may be unavailable)');
+            }).catch(err2 => {
+                console.error('Fallback error:', err2);
+                alert('Error generating certificate. Please try again.');
+            });
+        })
+        .finally(() => {
+            // Restore UI state
+            actionButtons.style.display = actionButtonsDisplay;
+            certDetailsCard.style.display = certDetailsDisplay;
+            verifySection.style.display = verifySectionDisplay;
+            if(qrImage) {
+                qrImage.style.display = qrDisplay;
+            }
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+}
+
+function printCertificate() {
+    window.print();
+}
+
+function toggleShareMenu(event) {
+    event.preventDefault();
+    const menu = document.getElementById('shareMenu');
+    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+
+function shareOn(platform) {
+    event.stopPropagation();
+    event.preventDefault();
+    
+    const url = window.location.href;
+    const title = 'Kumbh Pilgrimage Certificate';
+    const text = `I have received my Kumbh Pilgrimage Certificate! Join the sacred Kumbh Mela journey.`;
+    
+    let shareUrl = '';
+    
+    switch(platform) {
+        case 'whatsapp':
+            shareUrl = `https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`;
+            break;
+        case 'facebook':
+            shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+            break;
+        case 'twitter':
+            shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+            break;
+        case 'email':
+            shareUrl = `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(text + '\n' + url)}`;
+            break;
+    }
+    
+    if(shareUrl) {
+        window.open(shareUrl, '_blank');
+        // Close menu after sharing
+        document.getElementById('shareMenu').style.display = 'none';
+    }
+}
+
+function copyToClipboard() {
+    event.stopPropagation();
+    event.preventDefault();
+    
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(() => {
+        alert('Certificate link copied to clipboard!');
+        document.getElementById('shareMenu').style.display = 'none';
+    });
+}
+
+// Close menu when clicking outside
+document.addEventListener('click', (e) => {
+    const menu = document.getElementById('shareMenu');
+    if (!e.target.closest('button') && !e.target.closest('.share-menu')) {
+        menu.style.display = 'none';
+    }
+});
+</script>
+
+<style media="print">
+    .btn-group, .row > div:nth-child(3), .row > div:nth-child(4), .alert, .card {
+        display: none !important;
+    }
+    
+    #certificateContainer {
+        box-shadow: none !important;
+    }
+</style>
+{% endblock %}

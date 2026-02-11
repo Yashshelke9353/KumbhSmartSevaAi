@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Face Match Results - Kumbh Smart Seva{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-11">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="bi bi-check2-circle"></i> Face Matching Results</h2>
+            <a href="{{ url_for('face_match_page') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+        </div>
+
+        <div class="alert alert-success">
+            <i class="bi bi-info-circle"></i> 
+            Found <strong>{{ matches|length }}</strong> potential match(es) with {{ threshold }}% similarity threshold
+        </div>
+
+        {% if matches %}
+        {% for lost_id, match_list in matches.items() %}
+        <div class="card mb-4 border-warning">
+            <div class="card-header bg-warning text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-person-x"></i> Missing: {{ lost_persons[lost_id].name }}
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-3 text-center">
+                        {% if lost_persons[lost_id].photo_path %}
+                        <img src="{{ url_for('static', filename='uploads/' + lost_persons[lost_id].photo_path) }}" 
+                             alt="Lost person" class="img-fluid rounded border" style="max-height: 200px;">
+                        {% endif %}
+                        <p class="mt-2 mb-0">
+                            <strong>Age:</strong> {{ lost_persons[lost_id].age or 'Unknown' }}<br>
+                            <strong>Last Seen:</strong> {{ lost_persons[lost_id].last_seen_location }}
+                        </p>
+                    </div>
+                    <div class="col-md-9">
+                        <h5 class="mb-3">Potential Matches Found:</h5>
+                        
+                        {% for match in match_list %}
+                        <div class="card mb-3 border-success">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-2 text-center">
+                                        {% if found_persons[match.found_id].photo_path %}
+                                        <img src="{{ url_for('static', filename='uploads/' + found_persons[match.found_id].photo_path) }}" 
+                                             alt="Found person" class="img-fluid rounded border" style="max-height: 120px;">
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-7">
+                                        <h6 class="mb-1">Found Person #{{ match.found_id }}</h6>
+                                        <p class="mb-2 small">
+                                            <strong>Description:</strong> {{ found_persons[match.found_id].description[:100] }}...<br>
+                                            <strong>Location:</strong> {{ found_persons[match.found_id].location }}<br>
+                                            <strong>Contact:</strong> {{ found_persons[match.found_id].contact }}
+                                        </p>
+                                    </div>
+                                    <div class="col-md-3 text-center">
+                                        <div class="mb-2">
+                                            <div class="progress" style="height: 30px;">
+                                                <div class="progress-bar 
+                                                    {% if match.similarity >= 70 %}bg-success
+                                                    {% elif match.similarity >= 50 %}bg-warning
+                                                    {% else %}bg-info{% endif %}" 
+                                                     style="width: {{ match.similarity }}%">
+                                                    <strong>{{ match.similarity }}%</strong>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <a href="{{ url_for('compare_faces', lost_id=lost_id, found_id=match.found_id) }}" 
+                                           class="btn btn-sm btn-primary w-100 mb-1">
+                                            <i class="bi bi-eye"></i> Compare
+                                        </a>
+                                        <a href="tel:{{ found_persons[match.found_id].contact }}" 
+                                           class="btn btn-sm btn-success w-100">
+                                            <i class="bi bi-telephone"></i> Call
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-x-circle fs-1 text-muted mb-3"></i>
+                <h4>No Matches Found</h4>
+                <p class="text-muted">No potential matches found with {{ threshold }}% similarity threshold.</p>
+                <p class="text-muted">Try lowering the threshold for more results, or add more reports with photos.</p>
+                <a href="{{ url_for('face_match_page') }}" class="btn btn-primary mt-2">
+                    Try Again with Different Threshold
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card mt-4 bg-light">
+            <div class="card-body">
+                <h6><i class="bi bi-lightbulb"></i> Next Steps:</h6>
+                <ul class="mb-0">
+                    <li>Review high-match results (70%+) first - these are most likely to be correct</li>
+                    <li>Contact the reporter of found persons using the phone number provided</li>
+                    <li>Verify identity in person before confirming</li>
+                    <li>Update report status once person is reunited</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

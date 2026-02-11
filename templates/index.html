@@ -1,0 +1,842 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="text-center mb-5">
+    <h1 class="display-4 fw-bold mb-3">Welcome to Kumbh Smart Seva</h1>
+    <p class="lead text-muted">AI-Powered Platform for Pilgrim Support & Safety</p>
+</div>
+
+<div class="row g-4 mb-5">
+    <!-- Digital Locker Feature -->
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="card h-100">
+            <div class="card-body text-center p-4">
+                <i class="bi bi-shield-lock feature-icon mb-3"></i>
+                <h5 class="card-title">Digital Locker</h5>
+                <p class="card-text small">Securely store your important documents digitally. Access them anytime with QR codes.</p>
+                {% if session.user_id %}
+                <a href="{{ url_for('locker_page') }}" class="btn btn-primary btn-sm">Go to Locker</a>
+                {% else %}
+                <a href="{{ url_for('register') }}" class="btn btn-primary btn-sm">Get Started</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Lost & Found Feature -->
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="card h-100">
+            <div class="card-body text-center p-4">
+                <i class="bi bi-search-heart feature-icon mb-3"></i>
+                <h5 class="card-title">Lost &amp; Found</h5>
+                <p class="card-text small">Report missing persons or help reunite families. A community-driven safety network.</p>
+                {% if session.user_id %}
+                <a href="{{ url_for('lost_person_page') }}" class="btn btn-primary btn-sm">View Reports</a>
+                {% else %}
+                <a href="{{ url_for('register') }}" class="btn btn-primary btn-sm">Join Now</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Voice Translator Feature -->
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="card h-100">
+            <div class="card-body text-center p-4">
+                <i class="bi bi-mic feature-icon mb-3"></i>
+                <h5 class="card-title">AI Voice Translator</h5>
+                <p class="card-text small">Speak or type and get instant translations in multiple Indian languages. Perfect for volunteer-pilgrim communication.</p>
+                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#voiceTranslatorModal">Start Translating</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Smart Rooms Feature -->
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="card h-100">
+            <div class="card-body text-center p-4">
+                <i class="bi bi-house-door feature-icon mb-3"></i>
+                <h5 class="card-title">Smart Rooms</h5>
+                <p class="card-text small">Find nearby affordable rooms using OpenStreetMap and Haversine distance. Owners can list rooms and manage bookings.</p>
+                <a href="{{ url_for('rooms.search_rooms') }}" class="btn btn-primary btn-sm me-2">Search Rooms</a>
+                <a href="{{ url_for('rooms.add_room') }}" class="btn btn-outline-secondary btn-sm">Add Room</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI Voice Translator Modal -->
+<div class="modal fade" id="voiceTranslatorModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #FF9500 0%, #138808 100%); color: white;">
+                <h5 class="modal-title">
+                    <i class="fas fa-microphone"></i> AI Voice Translator
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Info Alert -->
+                <div class="alert alert-info alert-dismissible fade show" role="alert">
+                    <i class="fas fa-info-circle"></i> <strong>Quick Start:</strong> Don't worry about the "🔒 Not secure" warning! It's normal for HTTP connections. Just grant microphone permission when prompted and you're good to go.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+
+                <!-- Language Selection -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label"><strong>Speak in:</strong></label>
+                        <select id="sourceLanguage" class="form-select">
+                            <option value="en-US">English</option>
+                            <option value="hi-IN">Hindi</option>
+                            <option value="mr-IN">Marathi</option>
+                            <option value="gu-IN">Gujarati</option>
+                            <option value="ta-IN">Tamil</option>
+                            <option value="te-IN">Telugu</option>
+                            <option value="kn-IN">Kannada</option>
+                            <option value="ml-IN">Malayalam</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label"><strong>Translate to:</strong></label>
+                        <select id="targetLanguage" class="form-select">
+                            <option value="en">English</option>
+                            <option value="hi">Hindi</option>
+                            <option value="mr">Marathi</option>
+                            <option value="gu">Gujarati</option>
+                            <option value="ta">Tamil</option>
+                            <option value="te">Telugu</option>
+                            <option value="kn">Kannada</option>
+                            <option value="ml">Malayalam</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Voice Recording Section -->
+                <div class="text-center mb-4">
+                    <button id="startListening" class="btn btn-lg" style="background: linear-gradient(135deg, #FF9500 0%, #138808 100%); color: white; border: none;">
+                        <i class="fas fa-microphone"></i> Start Listening
+                    </button>
+                    <button id="stopListening" class="btn btn-lg btn-danger ms-2" style="display: none;">
+                        <i class="fas fa-stop"></i> Stop
+                    </button>
+                    <p id="listeningStatus" class="text-muted mt-2" style="display: none;">
+                        <i class="fas fa-spinner fa-spin"></i> Listening...
+                    </p>
+                </div>
+
+                <!-- Fallback: Manual Text Input -->
+                <div class="mb-4">
+                    <label class="form-label d-flex align-items-center">
+                        <strong>Or Type Your Text:</strong>
+                        <span class="badge bg-secondary ms-2">Alternative</span>
+                    </label>
+                    <textarea id="manualInput" class="form-control" rows="3" placeholder="Type or paste text here if you have microphone issues..."></textarea>
+                    <button id="translateManual" class="btn btn-outline-primary btn-sm mt-2">
+                        <i class="fas fa-language"></i> Translate Text
+                    </button>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label"><strong>Recognized Text:</strong></label>
+                    <textarea id="originalText" class="form-control" rows="4" readonly placeholder="Your spoken text will appear here..."></textarea>
+                </div>
+
+                <!-- Translated Text -->
+                <div class="mb-4">
+                    <label class="form-label"><strong>Translated Text:</strong></label>
+                    <textarea id="translatedText" class="form-control" rows="4" readonly placeholder="Translation will appear here..."></textarea>
+                </div>
+
+                <!-- Status Messages -->
+                <div id="translationStatus" class="alert alert-info" style="display: none; margin-bottom: 0;">
+                    <i class="fas fa-spinner fa-spin"></i> <span id="statusText"></span>
+                </div>
+                <div id="translationError" class="alert alert-danger" style="display: none; margin-bottom: 1rem;">
+                    <i class="fas fa-exclamation-circle"></i> <span id="errorText"></span>
+                </div>
+                <!-- Permission Help -->
+                <div id="permissionHelp" class="alert alert-warning" style="display: none; margin-bottom: 0;">
+                    <strong><i class="fas fa-key"></i> Fix Microphone Permission Blocked by Edge</strong>
+                    
+                    <h6 class="mt-3 mb-2">🔴 If you see "Blocked" next to Microphone in Site Settings:</h6>
+                    <ol class="mb-3" style="font-size: 0.95rem;">
+                        <li><strong>In Edge Address Bar:</strong>
+                            <ul>
+                                <li>Look for the ⓘ icon (info) or 🔒 icon to the left of URL</li>
+                                <li>If you see "Microphone: Blocked", click on it</li>
+                                <li>Change from "Block" to "Allow"</li>
+                                <li>Close the popup</li>
+                            </ul>
+                        </li>
+                        <li><strong>Or use Settings Menu:</strong>
+                            <ul>
+                                <li>Press <strong>Ctrl + Shift + Delete</strong> (or click ⋯ → Settings)</li>
+                                <li>Go to <strong>Privacy, search, and services</strong></li>
+                                <li>Scroll to <strong>"Site permissions"</strong></li>
+                                <li>Click <strong>"Microphone"</strong></li>
+                                <li>Look for <strong>"10.138.248.168"</strong> or this site in the list</li>
+                                <li>If it's in "Block" list, change it to "Allow"</li>
+                                <li>If it's not there, add it manually</li>
+                            </ul>
+                        </li>
+                        <li><strong>Windows Settings Check:</strong>
+                            <ul>
+                                <li>Press <strong>Windows + I</strong> to open Settings</li>
+                                <li>Go to <strong>Privacy & Security → Microphone</strong></li>
+                                <li>Make sure <strong>"Microphone access"</strong> is <strong>ON</strong></li>
+                                <li>Scroll down and find <strong>"Microsoft Edge"</strong></li>
+                                <li>Make sure it shows <strong>"On"</strong></li>
+                            </ul>
+                        </li>
+                    </ol>
+
+                    <h6 class="mb-2">✅ After Enabling Permissions:</h6>
+                    <ol class="mb-3" style="font-size: 0.95rem;">
+                        <li><strong>Refresh the page:</strong> Press Ctrl + R or F5</li>
+                        <li><strong>Try again:</strong> Click "Start Listening"</li>
+                        <li><strong>Grant permission:</strong> When prompted, click "Allow"</li>
+                    </ol>
+
+                    <div class="alert alert-info mt-3 mb-0">
+                        <small><strong>Note:</strong> After changing settings, you may need to close and reopen Edge completely for changes to take effect.</small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" id="copyTranslated" class="btn btn-primary">
+                    <i class="fas fa-copy"></i> Copy Translation
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Voice to Text and Translation with Gemini API
+    let recognition = null;
+    let isListening = false;
+    let speechStarted = false;
+    let silenceTimeout;
+    let finalTranscript = '';
+    let recognitionInitialized = false;
+    let audioContext = null;
+    let audioStream = null;
+    let manualStopRequested = false;
+
+    // Request microphone permission
+    async function requestMicrophonePermission() {
+        try {
+            console.log('📞 Requesting microphone permission...');
+            console.log('Browser info:', navigator.userAgent);
+            
+            // First, check if mediaDevices is available
+            const hasMediaDevices = navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
+            const hasWebkit = navigator.webkitGetUserMedia;
+            
+            console.log('mediaDevices available:', hasMediaDevices);
+            console.log('webkit available:', hasWebkit);
+            
+            if (!hasMediaDevices && !hasWebkit) {
+                console.error('No microphone API available');
+                showError('❌ Browser Microphone Support Issue\n\nYour browser appears to have microphone APIs disabled or unavailable.\n\nTry:\n1. Update your browser to the latest version\n2. Check Windows Settings → Privacy → Microphone (must be ON)\n3. Try a different browser (Chrome, Firefox)\n4. Restart your computer\n\nIf using Edge, try:\n- Settings → Privacy → Microphone (ensure it\'s ON)\n- Settings → Cookies and site permissions → Microphone');
+                return false;
+            }
+            
+            // Try standard mediaDevices first (most reliable)
+            if (hasMediaDevices) {
+                try {
+                    console.log('Attempting mediaDevices.getUserMedia...');
+                    audioStream = await navigator.mediaDevices.getUserMedia({ 
+                        audio: {
+                            echoCancellation: true,
+                            noiseSuppression: true,
+                            autoGainControl: true
+                        } 
+                    });
+                    console.log('✅ mediaDevices permission granted!');
+                    
+                    // Create audio context
+                    if (!audioContext) {
+                        try {
+                            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                        } catch (e) {
+                            console.warn('Warning: Could not create audio context:', e);
+                        }
+                    }
+                    
+                    // Stop the stream (we just wanted permission)
+                    audioStream.getTracks().forEach(track => track.stop());
+                    audioStream = null;
+                    
+                    console.log('✅ Microphone permission confirmed!');
+                    return true;
+                } catch (mediaError) {
+                    console.error('mediaDevices error details:', {
+                        name: mediaError.name,
+                        message: mediaError.message,
+                        code: mediaError.code
+                    });
+                    
+                    // Handle specific errors
+                    if (mediaError.name === 'NotAllowedError' || mediaError.name === 'PermissionDeniedError') {
+                        console.error('Permission denied by user or system');
+                        document.getElementById('permissionHelp').style.display = 'block';
+                        showError('🔒 Microphone Permission Denied\n\nEdge is blocking microphone access for this domain.\n\nTo fix in Edge:\n1. Click the ⓘ icon next to the URL\n2. Find "Microphone" and change from "Block" to "Allow"\n3. Or: Settings → Cookies and site permissions → Microphone\n4. Make sure this site is set to "Allow"\n5. Refresh the page\n\nTo check Windows permissions:\n1. Settings → Privacy & Security → Microphone\n2. Make sure "Microphone access" is ON\n3. Scroll down and ensure "Edge" is turned ON');
+                        return false;
+                    } else if (mediaError.name === 'NotFoundError' || mediaError.name === 'DevicesNotFoundError') {
+                        showError('❌ No Microphone Found\n\nChecklist:\n1. Is your microphone connected?\n2. Check Windows Sound Settings (Search → "Sound settings")\n3. Is the microphone not muted?\n4. Try a USB microphone if available\n5. Restart computer if microphone was just plugged in');
+                        return false;
+                    } else if (mediaError.name === 'NotReadableError') {
+                        showError('⚠️ Microphone In Use\n\nAnother app is using the microphone.\n\nClose these apps:\n• Zoom, Skype, Teams\n• Discord, Slack\n• OBS, streaming apps\n• Video conferencing apps\n\nThen try again');
+                        return false;
+                    }
+                    
+                    // If mediaDevices failed, try webkit fallback
+                    if (hasWebkit) {
+                        console.log('mediaDevices failed, trying webkit fallback...');
+                        return requestWebkitMicrophone();
+                    } else {
+                        throw mediaError;
+                    }
+                }
+            }
+            
+            // Fallback to webkit
+            if (hasWebkit) {
+                console.log('Using webkit fallback...');
+                return requestWebkitMicrophone();
+            }
+            
+        } catch (error) {
+            console.error('Microphone permission error:', error);
+            showError('⚠️ Unexpected Error Accessing Microphone\n\n' + error.message + '\n\nPlease try:\n1. Refresh the page\n2. Clear browser cache\n3. Try a different browser\n4. Restart computer');
+            return false;
+        }
+    }
+
+    // Webkit fallback for microphone
+    function requestWebkitMicrophone() {
+        return new Promise((resolve) => {
+            try {
+                console.log('Requesting webkit microphone...');
+                navigator.webkitGetUserMedia(
+                    { audio: true },
+                    (stream) => {
+                        console.log('✅ Webkit microphone permission granted!');
+                        stream.getTracks().forEach(track => track.stop());
+                        resolve(true);
+                    },
+                    (error) => {
+                        console.error('Webkit error:', error);
+                        showError('🔒 Microphone Permission Denied\n\nPlease:\n1. Check Edge settings for microphone permissions\n2. Try Settings → Privacy & Security → Microphone\n3. Add this site to allowed list');
+                        resolve(false);
+                    }
+                );
+            } catch (e) {
+                console.error('Webkit fallback error:', e);
+                showError('❌ Microphone access not available.\n\nTry:\n1. Using a different browser\n2. Updating Edge to latest version\n3. Restarting your computer');
+                resolve(false);
+            }
+        });
+    }
+
+    // Initialize Speech Recognition
+    function initializeVoiceRecognition() {
+        if (recognitionInitialized && recognition) {
+            return true;
+        }
+        
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            console.error('Speech Recognition API not supported');
+            showError('Speech Recognition is not supported in your browser. Please use Chrome, Edge, Firefox, or Safari.');
+            document.getElementById('startListening').disabled = true;
+            return false;
+        }
+        
+        try {
+            recognition = new SpeechRecognition();
+            // Keep the recognition running until the user explicitly clicks Stop.
+            // Many browsers will still auto-stop after long pauses; we handle that
+            // by auto-restarting unless the stop was requested by the user.
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.maxAlternatives = 1;
+            recognition.lang = 'en-US'; // Default language
+            recognitionInitialized = true;
+            console.log('✓ Speech Recognition initialized successfully');
+            return true;
+        } catch (e) {
+            console.error('Failed to initialize Speech Recognition:', e);
+            showError('Failed to initialize speech recognition. Please try again.');
+            return false;
+        }
+    }
+
+    // Show error message
+    function showError(message) {
+        console.error('Error shown:', message);
+        document.getElementById('translationError').style.display = 'block';
+        document.getElementById('errorText').textContent = message;
+    }
+
+    // Show status message
+    function showStatus(message) {
+        console.log('Status:', message);
+        document.getElementById('translationStatus').style.display = 'block';
+        document.getElementById('statusText').textContent = message;
+    }
+
+    // Hide status message
+    function hideStatus() {
+        document.getElementById('translationStatus').style.display = 'none';
+    }
+
+    // Hide error message
+    function hideError() {
+        document.getElementById('translationError').style.display = 'none';
+    }
+
+    // Reset UI
+    function resetUI() {
+        hideError();
+        document.getElementById('permissionHelp').style.display = 'none';
+        hideStatus();
+    }
+
+    // Clear silence timeout
+    function clearSilenceTimeout() {
+        if (silenceTimeout) {
+            clearTimeout(silenceTimeout);
+            silenceTimeout = null;
+        }
+    }
+
+    // Stop recognition safely
+    function stopRecognition() {
+        if (recognition && isListening) {
+            try {
+                recognition.stop();
+                clearSilenceTimeout();
+                isListening = false;
+                console.log('Recognition stopped');
+            } catch (e) {
+                console.error('Error stopping recognition:', e);
+            }
+        }
+    }
+
+    // Start Listening
+    document.getElementById('startListening').addEventListener('click', async function() {
+        console.log('Start Listening clicked');
+        
+        // Request microphone permission first
+        const hasPermission = await requestMicrophonePermission();
+        if (!hasPermission) {
+            return;
+        }
+        
+        // Initialize if not already done
+        if (!recognition) {
+            if (!initializeVoiceRecognition()) {
+                return;
+            }
+        }
+
+        resetUI();
+        document.getElementById('originalText').value = '';
+        document.getElementById('translatedText').value = '';
+        
+        const sourceLanguage = document.getElementById('sourceLanguage').value;
+        console.log('Selected language:', sourceLanguage);
+        recognition.lang = sourceLanguage;
+        
+        this.style.display = 'none';
+        document.getElementById('stopListening').style.display = 'inline-block';
+        document.getElementById('listeningStatus').style.display = 'block';
+        showStatus('🎤 Listening... Speak now');
+        // Reset manual stop flag so recognition will keep running until user stops.
+        manualStopRequested = false;
+        isListening = true;
+        speechStarted = false;
+        finalTranscript = '';
+        clearSilenceTimeout();
+        
+        recognition.onstart = function() {
+            console.log('✓ Recognition started');
+            isListening = true;
+            showStatus('🎤 Listening... Speak clearly');
+        };
+
+        recognition.onresult = function(event) {
+            console.log('Result event received:', event.results.length, 'results');
+            let interimTranscript = '';
+            
+            if (!speechStarted) {
+                speechStarted = true;
+                console.log('✓ Speech detected');
+                showStatus('🎤 Processing your speech...');
+            }
+            
+            clearSilenceTimeout();
+            
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const transcript = event.results[i][0].transcript;
+                const confidence = event.results[i][0].confidence;
+                console.log('Transcript segment:', transcript, '| Confidence:', confidence, '| isFinal:', event.results[i].isFinal);
+                
+                if (event.results[i].isFinal) {
+                    finalTranscript += transcript + ' ';
+                } else {
+                    interimTranscript += transcript;
+                }
+            }
+            
+            const displayText = (finalTranscript + interimTranscript).trim();
+            document.getElementById('originalText').value = displayText;
+            console.log('Display text:', displayText);
+        };
+
+        recognition.onend = function() {
+            console.log('Recognition ended. speechStarted:', speechStarted, 'manualStopRequested:', manualStopRequested);
+            clearSilenceTimeout();
+
+            // If the user explicitly clicked Stop, finalize and translate.
+            if (manualStopRequested) {
+                document.getElementById('startListening').style.display = 'inline-block';
+                document.getElementById('stopListening').style.display = 'none';
+                document.getElementById('listeningStatus').style.display = 'none';
+                isListening = false;
+
+                const finalText = document.getElementById('originalText').value.trim();
+                console.log('Final text captured (manual stop):', finalText);
+
+                if (finalText) {
+                    console.log('Translating (manual stop):', finalText);
+                    hideStatus();
+                    translateText(finalText);
+                } else {
+                    hideStatus();
+                    showError('⚠️ No speech detected. Please try again or use the text input below.');
+                }
+
+                // Reset manual flag after handling
+                manualStopRequested = false;
+                return;
+            }
+
+            // If onend fired without a manual stop, try to restart recognition so
+            // the session continues until the user stops it. This handles browser
+            // auto-stops after silence.
+            console.log('onend fired without manual stop — attempting to restart recognition');
+            try {
+                setTimeout(() => {
+                    try {
+                        if (!manualStopRequested) {
+                            recognition.start();
+                            console.log('Recognition restarted automatically');
+                        }
+                    } catch (restartErr) {
+                        console.error('Failed to restart recognition:', restartErr);
+                    }
+                }, 250);
+            } catch (e) {
+                console.error('Error scheduling recognition restart:', e);
+            }
+        };
+
+        recognition.onerror = function(event) {
+            console.error('Recognition error:', event.error);
+            clearSilenceTimeout();
+            document.getElementById('startListening').style.display = 'inline-block';
+            document.getElementById('stopListening').style.display = 'none';
+            document.getElementById('listeningStatus').style.display = 'none';
+            hideStatus();
+            isListening = false;
+            
+            let errorMsg = '';
+            
+            if (event.error === 'not-allowed' || event.error === 'denied') {
+                console.error('Microphone permission denied');
+                errorMsg = '🔒 Microphone access denied. Please:\n1. Check browser settings\n2. Look for microphone icon in address bar\n3. Click and select "Allow"';
+                document.getElementById('permissionHelp').style.display = 'block';
+            } else if (event.error === 'no-speech') {
+                errorMsg = '⚠️ No speech detected. Please speak louder or move closer to microphone.';
+            } else if (event.error === 'network') {
+                errorMsg = '⚠️ Network error. Check your internet connection.';
+            } else if (event.error === 'audio-capture') {
+                errorMsg = '⚠️ No microphone detected. Ensure microphone is connected and working.';
+            } else if (event.error === 'service-not-allowed') {
+                errorMsg = '⚠️ Speech recognition service not allowed. Check browser settings.';
+            } else {
+                errorMsg = '⚠️ Recognition error: ' + event.error + '. Please try again.';
+            }
+            
+            showError(errorMsg);
+        };
+
+        try {
+            console.log('Starting recognition...');
+            recognition.start();
+        } catch (e) {
+            console.error('Error starting recognition:', e);
+            showError('Failed to start recording: ' + e.message + '. Please try again.');
+            document.getElementById('startListening').style.display = 'inline-block';
+            document.getElementById('stopListening').style.display = 'none';
+            document.getElementById('listeningStatus').style.display = 'none';
+        }
+    });
+
+    // Stop Listening
+    document.getElementById('stopListening').addEventListener('click', function() {
+        console.log('Stop button clicked');
+        // Mark that the stop was requested by the user so onend will finalize.
+        manualStopRequested = true;
+        stopRecognition();
+    });
+
+    // Translate Text using Gemini API
+    function translateText(text) {
+        console.log('translateText called with:', text.substring(0, 50) + '...');
+        
+        if (!text.trim()) {
+            showError('Please enter some text to translate.');
+            return;
+        }
+
+        resetUI();
+        showStatus('✨ Translating with AI...');
+
+        const sourceLanguage = document.getElementById('sourceLanguage').value;
+        const targetLanguage = document.getElementById('targetLanguage').value;
+        
+        console.log('Translation params:', {sourceLanguage, targetLanguage, textLength: text.length});
+
+        fetch('/api/translate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                text: text,
+                source_language: sourceLanguage,
+                target_language: targetLanguage
+            })
+        })
+        .then(response => {
+            console.log('Translation response status:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Translation data received:', data);
+            hideStatus();
+            if (data.success) {
+                document.getElementById('translatedText').value = data.translated_text;
+                showStatus(`✓ Translated from ${data.source_language} to ${data.target_language}`);
+                setTimeout(() => hideStatus(), 3000);
+            } else {
+                showError('Translation failed: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            hideStatus();
+            console.error('Translation error:', error);
+            showError('Translation error: ' + error.message + '. Make sure the server is running at http://localhost:5000');
+        });
+    }
+
+    // Copy Translation
+    document.getElementById('copyTranslated').addEventListener('click', function() {
+        const translatedText = document.getElementById('translatedText').value;
+        if (!translatedText) {
+            alert('No translation to copy. Please translate some text first.');
+            return;
+        }
+        
+        navigator.clipboard.writeText(translatedText).then(() => {
+            const btn = this;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+            }, 2000);
+        }).catch(() => {
+            alert('Failed to copy. Please try again.');
+        });
+    });
+
+    // Manual Text Translation (Fallback)
+    document.getElementById('translateManual').addEventListener('click', function() {
+        const manualText = document.getElementById('manualInput').value.trim();
+        console.log('Manual translation clicked with text:', manualText.substring(0, 50));
+        if (manualText) {
+            document.getElementById('originalText').value = manualText;
+            document.getElementById('listeningStatus').style.display = 'none';
+            document.getElementById('startListening').style.display = 'inline-block';
+            document.getElementById('stopListening').style.display = 'none';
+            translateText(manualText);
+        } else {
+            alert('Please enter some text to translate.');
+        }
+    });
+
+    // Allow Enter key to submit manual text
+    document.getElementById('manualInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && e.ctrlKey) {
+            document.getElementById('translateManual').click();
+        }
+    });
+
+    // Initialize on page load
+    window.addEventListener('load', function() {
+        console.log('Page loaded - initializing voice recognition');
+        initializeVoiceRecognition();
+        
+        const modal = document.getElementById('voiceTranslatorModal');
+        if (modal) {
+            modal.addEventListener('shown.bs.modal', function() {
+                console.log('Modal opened');
+                document.getElementById('startListening').focus();
+            });
+        }
+    });
+
+    // Log when page is ready
+    console.log('Voice Translator script loaded');
+</script>
+
+<!-- Kumbh Visit Certificate Section -->
+<div class="row g-4 mb-5">
+    <div class="col-12">
+        <div class="card border-0 shadow-lg" style="background: linear-gradient(135deg, #FFF8F0 0%, #F0F7FF 100%); border: 3px solid #d4af37;">
+            <div class="card-body p-5">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <div style="margin-bottom: 20px;">
+                            <img src="{{ url_for('static', filename='cert_design/gov logo.png') }}" alt="Government Logo" style="height:80px; object-fit:contain;" />
+                        </div>
+                        <h2 style="font-family: 'Georgia', serif; color: #138808; margin-bottom: 15px;">
+                            <i class="fas fa-certificate"></i> Kumbh Pilgrimage Certificate
+                        </h2>
+                        <p style="font-size: 16px; color: #555; margin-bottom: 15px;">
+                            Receive a personalized certificate commemorating your sacred pilgrimage visit to Kumbh Mela. Share your spiritual journey with loved ones through a beautifully designed, official-looking certificate.
+                        </p>
+                        <ul style="font-size: 15px; color: #666; margin-bottom: 20px;">
+                            <li><i class="fas fa-check" style="color: #138808;"></i> Professional certificate design</li>
+                            <li><i class="fas fa-check" style="color: #138808;"></i> Instant generation and QR verification</li>
+                            <li><i class="fas fa-check" style="color: #138808;"></i> Download, print, and share options</li>
+                            <li><i class="fas fa-check" style="color: #138808;"></i> Available for all pilgrims</li>
+                        </ul>
+                        <a href="{{ url_for('generate_certificate_page') }}" class="btn btn-primary btn-lg" style="background: linear-gradient(135deg, #FF9500 0%, #138808 100%); border: none;">
+                            <i class="fas fa-certificate"></i> Generate Your Certificate
+                        </a>
+                    </div>
+                    <div class="col-md-6 text-center">
+                        <div class="certificate-preview p-3" style="background: white; padding: 20px; border-radius: 10px; border: 2px solid #e6d6a3; box-shadow: 0 8px 20px rgba(0,0,0,0.08);">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <img src="{{ url_for('static', filename='cert_design/gov logo.png') }}" alt="Government Logo" style="height:48px; object-fit:contain;">
+                                <img src="{{ url_for('static', filename='cert_design/nashik-kumbh-mela-logo.webp') }}" alt="Kumbh Logo" style="height:64px; object-fit:contain;">
+                            </div>
+
+                            <div class="certificate-sample" style="background-image: url('{{ url_for('static', filename='cert_design/ramkund-bathing-timings-nashik-kumbh-mela.webp') }}'); background-size: cover; background-position: center; height: 220px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.06); display:flex; align-items:flex-end;">
+                                <div style="background: rgba(255,255,255,0.85); width:100%; padding:12px; border-bottom-left-radius:6px; border-bottom-right-radius:6px;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                                        <div>
+                                            <h5 style="margin:0; font-family: 'Georgia', serif; color:#138808;">KUMBH CERTIFICATE</h5>
+                                            <small style="color:#555;">Sample Preview • Official look</small>
+                                        </div>
+                                        <div style="text-align:right;">
+                                            <small style="color:#777; display:block;">Name</small>
+                                            <strong style="font-size:14px; color:#222;">Yash Pilgrim</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-3 d-flex justify-content-center">
+                                <a href="{{ url_for('generate_certificate_page') }}" class="btn btn-primary btn-sm me-2">Preview &amp; Generate</a>
+                                <a href="{{ url_for('static', filename='uploads/certificates/Kumbh_Certificate_F1D8031C_20260211_121323.png') }}" class="btn btn-outline-secondary btn-sm" target="_blank">Sample Image</a>
+                            </div>
+                        </div>
+                        <p style="margin-top: 18px; font-size: 13px; color: #666; font-style: italic;">
+                            Beautiful, authentic-looking certificates using our official logos and imagery
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- How It Works -->
+<div class="card mb-5">
+    <div class="card-body p-5">
+        <h2 class="text-center mb-4">How It Works</h2>
+        <div class="row g-4">
+            <div class="col-md-4 text-center">
+                <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                    <span class="fs-4 fw-bold">1</span>
+                </div>
+                <h5>Register</h5>
+                <p class="text-muted">Create your free account in seconds</p>
+            </div>
+            <div class="col-md-4 text-center">
+                <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                    <span class="fs-4 fw-bold">2</span>
+                </div>
+                <h5>Upload & Report</h5>
+                <p class="text-muted">Store documents or report lost persons</p>
+            </div>
+            <div class="col-md-4 text-center">
+                <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                    <span class="fs-4 fw-bold">3</span>
+                </div>
+                <h5>Stay Safe</h5>
+                <p class="text-muted">Access anytime, help others, stay connected</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Section -->
+<div class="row g-4 text-center">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <i class="bi bi-people fs-1 text-primary mb-2"></i>
+                <h3 class="fw-bold">Free for All</h3>
+                <p class="text-muted">No charges, no hidden fees</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <i class="bi bi-shield-check fs-1 text-success mb-2"></i>
+                <h3 class="fw-bold">Secure</h3>
+                <p class="text-muted">Your data is encrypted and safe</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <i class="bi bi-clock fs-1 text-warning mb-2"></i>
+                <h3 class="fw-bold">24/7 Access</h3>
+                <p class="text-muted">Available anytime you need</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if not session.user_id %}
+<div class="text-center mt-5">
+    <h3 class="mb-3">Ready to Get Started?</h3>
+    <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg px-5">Register Now</a>
+</div>
+{% endif %}
+{% endblock %}

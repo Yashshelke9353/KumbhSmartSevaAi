@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+
+{% block title %}Room Details{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+{% endblock %}
+
+{% block content %}
+<div class="card p-4">
+    <h4>{{ room.name }}</h4>
+    <div class="row">
+        <div class="col-md-6">
+            {% if room.photo_path %}
+            <img src="/{{ room.photo_path }}" class="img-fluid rounded mb-3">
+            {% endif %}
+            <p><strong>Owner:</strong> {{ room.owner_name }} | {{ room.phone }}</p>
+            <p><strong>Price:</strong> ₹{{ room.price_per_night }}</p>
+            <p><strong>Address:</strong> {{ room.address }}</p>
+            <p><strong>Status:</strong> {% if room.status=='available' %} <span class="text-success">🟢 Available{% else %} <span class="text-danger">🔴 {{ room.status }}{% endif %}</span></p>
+            <hr>
+            <h6>Facilities</h6>
+            <ul>
+                <li><strong>Rooms:</strong> {{ room.num_rooms or 1 }}</li>
+                <li><strong>Water:</strong> {% if room.water_facility %}Yes{% else %}No{% endif %}</li>
+                <li><strong>Toilet:</strong> {% if room.toilet_available %}Yes{% else %}No{% endif %}</li>
+                <li><strong>Bathroom:</strong> {{ room.bathroom_type or 'N/A' }}</li>
+                <li><strong>Security:</strong> {{ room.security or 'N/A' }}</li>
+                <li><strong>Amenities:</strong> {{ room.amenities or 'N/A' }}</li>
+            </ul>
+            <div class="mt-3 d-flex gap-2 align-items-center">
+                <button id="get_directions_btn" class="btn btn-outline-primary">Get Directions</button>
+                <small id="route_info" class="text-muted"></small>
+            </div>
+            <div id="room_map" class="mt-3" style="height:520px;border-radius:10px"></div>
+        </div>
+        <div class="col-md-6">
+            <h5>Make a Booking</h5>
+            <form method="post" action="{{ url_for('rooms.book_room', room_id=room.id) }}">
+                <div class="mb-2">
+                    <input name="visitor_name" class="form-control" placeholder="Your name" required>
+                </div>
+                <div class="mb-2">
+                    <input name="visitor_phone" class="form-control" placeholder="Phone" required>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Aadhaar photo (required for security)</label>
+                    <input name="aadhaar" type="file" accept="image/*" class="form-control" required>
+                </div>
+                <div class="mb-2">
+                    <label>Check-in</label>
+                    <input name="check_in" type="date" class="form-control" required>
+                </div>
+                <div class="mb-2">
+                    <label>Check-out</label>
+                    <input name="check_out" type="date" class="form-control" required>
+                </div>
+                <button class="btn btn-primary">Book</button>
+            </form>
+
+            <hr>
+            <h6>Existing Bookings</h6>
+            {% if bookings %}
+                <ul>
+                {% for b in bookings %}
+                    <li>{{ b.visitor_name }} — {{ b.check_in }} to {{ b.check_out }}</li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p>No bookings yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Leaflet Routing Machine (uses OSRM demo server) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+<script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.min.js"></script>
+<script>
+    const roomLat = {{ room.latitude }};
+    const roomLng = {{ room.longitude }};
+    const roomMap = L.map('room_map').setView([roomLat, roomLng], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(roomMap);
+    const roomMarker = L.marker([roomLat, roomLng]).addTo(roomMap).bindPopup('<strong>{{ room.name }}<\/strong>').openPopup();
+    // Ensure proper rendering when map is inside responsive layout
+    setTimeout(()=>{ try{ roomMap.invalidateSize(); }catch(e){} }, 200);
+
+    let routingControl = null;
+    document.getElementById('get_directions_btn').addEventListener('click', function(){
+        if(!navigator.geolocation){
+            alert('Geolocation is not supported by your browser');
+            return;
+        }
+        this.disabled = true;
+        this.textContent = 'Getting location...';
+        navigator.geolocation.getCurrentPosition(function(pos){
+            const uLat = pos.coords.latitude;
+            const uLng = pos.coords.longitude;
+            // Try routing using Leaflet Routing Machine with OSRM
+                try{
+                if(routingControl) roomMap.removeControl(routingControl);
+                routingControl = L.Routing.control({
+                    waypoints: [L.latLng(uLat, uLng), L.latLng(roomLat, roomLng)],
+                    routeWhileDragging: false,
+                    showAlternatives: false,
+                    lineOptions: { styles: [{color: 'blue', opacity: 0.7, weight: 6}] },
+                    createMarker: function(i, wp) {
+                        if(i === 0) return L.marker(wp.latLng).bindPopup('You are here');
+                        if(i === 1) return L.marker(wp.latLng).bindPopup('{{ room.name }}');
+                        return null;
+                    }
+                }).addTo(roomMap);
+                // Show route summary when available
+                routingControl.on('routesfound', function(e){
+                    try{
+                        const summary = e.routes[0].summary; // distance in meters, time in seconds
+                        const km = (summary.totalDistance/1000).toFixed(2);
+                        const mins = Math.round(summary.totalTime/60);
+                        document.getElementById('route_info').textContent = ` ~ ${km} km • ${mins} min`;
+                    }catch(err){
+                        console.warn('Failed to parse route summary', err);
+                    }
+                });
+                setTimeout(()=>{ try{ roomMap.invalidateSize(); }catch(e){} }, 200);
+                document.getElementById('get_directions_btn').textContent = 'Directions loaded';
+            }catch(e){
+                // Fallback: draw straight line and show distance
+                const poly = L.polyline([[uLat,uLng],[roomLat,roomLng]], {color:'blue', weight:4, opacity:0.7}).addTo(roomMap);
+                roomMap.fitBounds(poly.getBounds(), {padding:[50,50]});
+                const dist = (function(){
+                    function toRad(v){return v*Math.PI/180}
+                    const R=6371; const dLat=toRad(roomLat-uLat); const dLon=toRad(roomLng-uLng);
+                    const a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(toRad(uLat))*Math.cos(toRad(roomLat))*Math.sin(dLon/2)*Math.sin(dLon/2);
+                    const c=2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); return R*c;
+                })();
+                alert('Showing straight-line direction. Distance ≈ ' + dist.toFixed(2) + ' km');
+                document.getElementById('get_directions_btn').textContent = 'Done';
+            }
+        }, function(err){
+            alert('Unable to get your location: ' + err.message);
+            document.getElementById('get_directions_btn').disabled = false;
+            document.getElementById('get_directions_btn').textContent = 'Get Directions';
+        }, {enableHighAccuracy:true, timeout:10000});
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Reports - Kumbh Smart Seva{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <h2 class="mb-4">
+        <i class="fas fa-file-pdf"></i> Reports & Statistics
+    </h2>
+    
+    <!-- Report Filters -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Report Filters</h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" class="row align-items-end gap-3">
+                <div class="col-md-3">
+                    <label for="reportType" class="form-label">Report Type</label>
+                    <select class="form-select" name="type" id="reportType">
+                        <option value="daily" {% if report_type == 'daily' %}selected{% endif %}>Daily</option>
+                        <option value="weekly" {% if report_type == 'weekly' %}selected{% endif %}>Weekly</option>
+                        <option value="monthly" {% if report_type == 'monthly' %}selected{% endif %}>Monthly</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-3">
+                    <label for="startDate" class="form-label">Start Date</label>
+                    <input type="date" class="form-control" name="start_date" id="startDate" value="{{ start_date }}">
+                </div>
+                
+                <div class="col-md-3">
+                    <label for="endDate" class="form-label">End Date</label>
+                    <input type="date" class="form-control" name="end_date" id="endDate" value="{{ end_date }}">
+                </div>
+                
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i> Generate Report
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Summary Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h1 style="color: #FF9500;">{{ certificates|length }}</h1>
+                    <p class="text-muted mb-0">Total Certificates</p>
+                    <small class="text-muted">{{ start_date }} to {{ end_date }}</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h1 style="color: #138808;">{{ certs_by_location|length }}</h1>
+                    <p class="text-muted mb-0">Locations Covered</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h1 style="color: #0066cc;">{{ per_day_avg }}</h1>
+                    <p class="text-muted mb-0">Per Day Average</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h1 style="color: #28a745;">
+                        {% set max_count = certs_by_location|map(attribute='count')|max|default(0) %}
+                        {{ max_count }}
+                    </h1>
+                    <p class="text-muted mb-0">Peak Location Count</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Location-wise Breakdown -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Certificates by Location</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Location</th>
+                            <th>Certificates Issued</th>
+                            <th>Percentage</th>
+                            <th>Progress</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set total_certs = certs_by_location|map(attribute='count')|sum %}
+                        {% for loc in certs_by_location %}
+                        <tr>
+                            <td><strong>{{ loc.location_name }}</strong></td>
+                            <td>{{ loc.count }}</td>
+                            <td>
+                                {% if total_certs > 0 %}
+                                    {{ ((loc.count / total_certs) * 100)|int }}%
+                                {% else %}
+                                    0%
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="progress" style="min-width: 200px;">
+                                    <div class="progress-bar" role="progressbar" 
+                                         style="width: {% if total_certs > 0 %}{{ ((loc.count / total_certs) * 100)|int }}{% else %}0{% endif %}%; background: linear-gradient(90deg, #FF9500, #138808);"
+                                         aria-valuenow="{{ loc.count }}" aria-valuemin="0" aria-valuemax="{{ total_certs }}">
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if not certs_by_location %}
+            <div class="alert alert-info mb-0">
+                <i class="fas fa-info-circle"></i> No certificate data for the selected period
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Detailed Certificate List -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Issued Certificates</h5>
+            <button class="btn btn-sm btn-outline-primary" onclick="window.print()">
+                <i class="fas fa-print"></i> Print
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Certificate ID</th>
+                            <th>Name</th>
+                            <th>Location</th>
+                            <th>Visit Date</th>
+                            <th>Issued Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cert in certificates %}
+                        <tr>
+                            <td><code>{{ cert.certificate_id }}</code></td>
+                            <td>{{ cert.full_name }}</td>
+                            <td>{{ cert.location_name }}</td>
+                            <td>{{ cert.visit_date }}</td>
+                            <td>{{ cert.created_at }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if not certificates %}
+            <div class="alert alert-info mb-0">
+                <i class="fas fa-info-circle"></i> No certificates found for the selected period
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style media="print">
+    .card-header:not(:nth-child(1)),
+    .form-control, 
+    form,
+    button {
+        display: none !important;
+    }
+    
+    .table {
+        font-size: 11px;
+    }
+</style>
+{% endblock %}

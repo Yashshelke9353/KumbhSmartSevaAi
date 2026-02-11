@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}Generate Certificate - Kumbh Smart Seva{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-lg">
+                <div style="background: linear-gradient(135deg, #FF9500 0%, #FFFFFF 50%, #138808 100%); padding: 30px; color: white; text-align: center; border-radius: 8px 8px 0 0;">
+                    <h1 class="mb-2">
+                        <i class="fas fa-certificate"></i> Kumbh Visit Certificate
+                    </h1>
+                    <p class="mb-0">Generate your pilgrimage certificate</p>
+                </div>
+                
+                <div class="card-body p-4">
+                    <form id="certificateForm" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="fullName" class="form-label">Full Name *</label>
+                                <input type="text" class="form-control" id="fullName" name="full_name" required 
+                                       placeholder="Enter your full name">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       placeholder="Enter your email">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="phone" class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="phone" name="phone" 
+                                       placeholder="Enter your phone number">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="visitDate" class="form-label">Visit Date *</label>
+                                <input type="date" class="form-control" id="visitDate" name="visit_date" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="location" class="form-label">Sacred Location *</label>
+                            <select class="form-select" id="location" name="location_id" required>
+                                <option value="">Select a location</option>
+                                {% for loc in locations %}
+                                <option value="{{ loc.id }}">{{ loc.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="photo" class="form-label">Photo (Optional)</label>
+                            <input type="file" class="form-control" id="photo" name="photo" accept="image/*">
+                            <small class="text-muted">Max 16MB. Supported formats: JPG, PNG</small>
+                        </div>
+                        
+                        <div class="alert alert-info mb-3">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Privacy Notice:</strong> Your information will be securely stored and used only for certificate generation and crowd analysis.
+                        </div>
+                        
+                        <div class="btn-group d-flex gap-2">
+                            <button type="submit" class="btn btn-primary flex-grow-1">
+                                <i class="fas fa-certificate"></i> Generate Certificate
+                            </button>
+                            <a href="/" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+
+                    <!-- Certificate Verification Section -->
+                    <hr class="my-4">
+                    <h5 class="mb-3">Verify a Certificate</h5>
+                    <form id="verifyForm" class="mb-3">
+                        <div class="mb-3">
+                            <label for="certificateId" class="form-label">Certificate ID or QR Code</label>
+                            <input type="text" class="form-control" id="certificateId" name="certificate_id"
+                                   placeholder="Enter certificate ID (e.g., ABC12D34)">
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-outline-success">Verify Certificate</button>
+                        </div>
+                    </form>
+
+                    <div id="verifyResults" style="display: none;">
+                        <div id="verifyValid" class="alert alert-success" style="display:none;"></div>
+                        <div id="verifyInvalid" class="alert alert-danger" style="display:none;">
+                            Certificate not found. Please check the ID and try again.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" backdrop="static" keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-5">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h5>Generating your certificate...</h5>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('certificateForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const formData = new FormData(e.target);
+    const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'), { backdrop: 'static', keyboard: false });
+    loadingModal.show();
+
+    try {
+        const response = await fetch('/certificate/create', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            }
+        });
+
+        // Handle all response statuses
+        if (!response.ok && response.status !== 400) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        loadingModal.hide();
+
+        if (data.success) {
+            window.location.href = data.redirect;
+        } else {
+            alert('Error: ' + (data.error || 'Unknown error occurred'));
+        }
+    } catch (error) {
+        loadingModal.hide();
+        console.error('Certificate creation error:', error);
+        alert('Error creating certificate: ' + error.message);
+    }
+});
+
+// Verification form handler
+document.getElementById('verifyForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const certId = document.getElementById('certificateId').value.trim();
+    if (!certId) return;
+
+    try {
+        const res = await fetch('/api/certificate/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ certificate_id: certId })
+        });
+
+        const data = await res.json();
+        const results = document.getElementById('verifyResults');
+        const valid = document.getElementById('verifyValid');
+        const invalid = document.getElementById('verifyInvalid');
+
+        results.style.display = 'block';
+
+        if (data.valid && data.certificate) {
+            invalid.style.display = 'none';
+            valid.style.display = 'block';
+            valid.innerHTML = `
+                <h5>Certificate Verified</h5>
+                <p><strong>Name:</strong> ${data.certificate.full_name}</p>
+                <p><strong>Location:</strong> ${data.certificate.location_name}</p>
+                <p><strong>Visit Date:</strong> ${data.certificate.visit_date}</p>
+                <p><strong>Certificate ID:</strong> <code>${data.certificate.certificate_id}</code></p>
+            `;
+        } else {
+            valid.style.display = 'none';
+            invalid.style.display = 'block';
+        }
+    } catch (err) {
+        alert('Verification error: ' + err.message);
+    }
+});
+
+// Set today's date as default
+document.getElementById('visitDate').valueAsDate = new Date();
+</script>
+
+<style>
+.form-label {
+    font-weight: 600;
+    color: #333;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #FF9500;
+    box-shadow: 0 0 0 0.2rem rgba(255, 149, 0, 0.25);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #FF9500 0%, #138808 100%);
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #E68400 0%, #0D6B06 100%);
+}
+</style>
+{% endblock %}

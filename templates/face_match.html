@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Face Matching - Kumbh Smart Seva{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <h2 class="mb-4"><i class="bi bi-eye"></i> AI Face Matching System</h2>
+        
+        <div class="alert alert-info">
+            <h5><i class="bi bi-info-circle"></i> How It Works</h5>
+            <p class="mb-0">
+                Our AI system compares photos of missing persons with found persons to identify potential matches. 
+                The system uses advanced face recognition to calculate similarity scores.
+            </p>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-6">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="bi bi-person-x fs-1 text-warning mb-3"></i>
+                        <h3 class="fw-bold">{{ lost_count }}</h3>
+                        <p class="text-muted">Lost Persons with Photos</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="bi bi-person-check fs-1 text-success mb-3"></i>
+                        <h3 class="fw-bold">{{ found_count }}</h3>
+                        <p class="text-muted">Found Persons with Photos</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="bi bi-play-circle"></i> Run Face Matching</h4>
+            </div>
+            <div class="card-body p-4">
+                {% if lost_count == 0 or found_count == 0 %}
+                <div class="alert alert-warning">
+                    <strong>Cannot Run Matching:</strong> 
+                    {% if lost_count == 0 %}
+                    No lost person reports with photos available.
+                    {% else %}
+                    No found person reports with photos available.
+                    {% endif %}
+                    <br>
+                    Please ensure both categories have reports with photos before running the matching algorithm.
+                </div>
+                <a href="{{ url_for('lost_person_page') }}" class="btn btn-warning">
+                    <i class="bi bi-plus-circle"></i> Add Reports
+                </a>
+                {% else %}
+                <form method="POST" action="{{ url_for('run_face_match') }}">
+                    <div class="mb-4">
+                        <label for="threshold" class="form-label">
+                            <strong>Similarity Threshold:</strong> {{ threshold or 40 }}%
+                        </label>
+                        <input type="range" 
+                               class="form-range" 
+                               id="threshold" 
+                               name="threshold" 
+                               min="20" 
+                               max="80" 
+                               value="40"
+                               oninput="document.getElementById('thresholdValue').innerText = this.value + '%'">
+                        <div class="d-flex justify-content-between text-muted small">
+                            <span>20% (More matches, less accurate)</span>
+                            <span id="thresholdValue">40%</span>
+                            <span>80% (Fewer matches, more accurate)</span>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <strong>Recommended:</strong> Start with 40% threshold. Lower values give more results but may include false positives.
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                        <i class="bi bi-cpu"></i> Start Face Matching
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5><i class="bi bi-question-circle"></i> Understanding the Results</h5>
+                <ul class="mb-0">
+                    <li><strong>High Match (70%+):</strong> Very strong similarity, likely the same person</li>
+                    <li><strong>Medium Match (50-70%):</strong> Good similarity, worth investigating</li>
+                    <li><strong>Low Match (40-50%):</strong> Possible match, check carefully</li>
+                    <li><strong>Below 40%:</strong> Unlikely to be the same person</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Update threshold value display
+    const slider = document.getElementById('threshold');
+    const valueDisplay = document.getElementById('thresholdValue');
+    
+    if (slider && valueDisplay) {
+        slider.addEventListener('input', function() {
+            valueDisplay.innerText = this.value + '%';
+        });
+    }
+</script>
+{% endblock %}

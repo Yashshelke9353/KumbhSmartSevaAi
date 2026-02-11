@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Compare Faces - Kumbh Smart Seva{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="bi bi-arrows-angle-contract"></i> Face Comparison</h2>
+            <a href="{{ url_for('face_match_page') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+        </div>
+
+        <!-- Similarity Score -->
+        <div class="card mb-4 border-{{ 'success' if similarity >= 70 else 'warning' if similarity >= 50 else 'info' }}">
+            <div class="card-body text-center">
+                <h3 class="mb-3">Similarity Score</h3>
+                <div class="progress mb-3" style="height: 50px;">
+                    <div class="progress-bar 
+                        {% if similarity >= 70 %}bg-success
+                        {% elif similarity >= 50 %}bg-warning
+                        {% else %}bg-info{% endif %}" 
+                         style="width: {{ similarity }}%">
+                        <strong style="font-size: 1.5rem;">{{ similarity }}%</strong>
+                    </div>
+                </div>
+                <p class="mb-0">
+                    {% if similarity >= 70 %}
+                    <span class="badge bg-success">High Match - Very Likely Same Person</span>
+                    {% elif similarity >= 50 %}
+                    <span class="badge bg-warning">Medium Match - Worth Investigating</span>
+                    {% else %}
+                    <span class="badge bg-info">Low Match - Check Carefully</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+
+        <!-- Side by Side Comparison -->
+        <div class="row g-4">
+            <!-- Lost Person -->
+            <div class="col-md-6">
+                <div class="card h-100 border-warning">
+                    <div class="card-header bg-warning text-white">
+                        <h4 class="mb-0"><i class="bi bi-person-x"></i> Missing Person</h4>
+                    </div>
+                    <div class="card-body">
+                        {% if lost_report.photo_path %}
+                        <div class="text-center mb-3">
+                            <img src="{{ url_for('static', filename='uploads/' + lost_report.photo_path) }}" 
+                                 alt="Lost person" 
+                                 class="img-fluid rounded border" 
+                                 style="max-height: 400px;">
+                        </div>
+                        {% endif %}
+                        
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <th style="width: 120px;">Name:</th>
+                                <td><strong>{{ lost_report.name }}</strong></td>
+                            </tr>
+                            <tr>
+                                <th>Age:</th>
+                                <td>{{ lost_report.age or 'Unknown' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Gender:</th>
+                                <td>{{ lost_report.gender or 'Not specified' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Description:</th>
+                                <td>{{ lost_report.description }}</td>
+                            </tr>
+                            <tr>
+                                <th>Last Seen:</th>
+                                <td>{{ lost_report.last_seen_location }}</td>
+                            </tr>
+                            <tr>
+                                <th>Contact:</th>
+                                <td>
+                                    <a href="tel:{{ lost_report.contact }}" class="btn btn-sm btn-success">
+                                        <i class="bi bi-telephone"></i> {{ lost_report.contact }}
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Reported:</th>
+                                <td>{{ lost_report.created_at }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Found Person -->
+            <div class="col-md-6">
+                <div class="card h-100 border-success">
+                    <div class="card-header bg-success text-white">
+                        <h4 class="mb-0"><i class="bi bi-person-check"></i> Found Person</h4>
+                    </div>
+                    <div class="card-body">
+                        {% if found_report.photo_path %}
+                        <div class="text-center mb-3">
+                            <img src="{{ url_for('static', filename='uploads/' + found_report.photo_path) }}" 
+                                 alt="Found person" 
+                                 class="img-fluid rounded border" 
+                                 style="max-height: 400px;">
+                        </div>
+                        {% endif %}
+                        
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <th style="width: 120px;">Report ID:</th>
+                                <td><strong>#{{ found_report.id }}</strong></td>
+                            </tr>
+                            <tr>
+                                <th>Description:</th>
+                                <td>{{ found_report.description }}</td>
+                            </tr>
+                            <tr>
+                                <th>Current Location:</th>
+                                <td>{{ found_report.location }}</td>
+                            </tr>
+                            <tr>
+                                <th>Contact:</th>
+                                <td>
+                                    <a href="tel:{{ found_report.contact }}" class="btn btn-sm btn-success">
+                                        <i class="bi bi-telephone"></i> {{ found_report.contact }}
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Reporter:</th>
+                                <td>{{ found_report.reporter_name }}</td>
+                            </tr>
+                            <tr>
+                                <th>Reported:</th>
+                                <td>{{ found_report.created_at }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Card -->
+        <div class="card mt-4 bg-light">
+            <div class="card-body">
+                <h5><i class="bi bi-check-circle"></i> Next Steps:</h5>
+                <ol>
+                    <li>Contact both parties using the phone numbers provided</li>
+                    <li>Verify the person's identity through additional questions or documents</li>
+                    <li>Arrange a safe meeting place (preferably at a police station or help center)</li>
+                    <li>Once confirmed, mark the person as found in the system</li>
+                </ol>
+                
+                <div class="mt-3 d-flex gap-2">
+                    <a href="tel:{{ lost_report.contact }}" class="btn btn-warning flex-fill">
+                        <i class="bi bi-telephone"></i> Call Lost Person Reporter
+                    </a>
+                    <a href="tel:{{ found_report.contact }}" class="btn btn-success flex-fill">
+                        <i class="bi bi-telephone"></i> Call Found Person Reporter
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Report Lost Person - Kumbh Smart Seva{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-warning text-white">
+                <h4 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Report Missing Person</h4>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-warning">
+                    <i class="bi bi-info-circle"></i> 
+                    <strong>Important:</strong> Please provide accurate information to help locate the missing person quickly.
+                </div>
+                
+                <form method="POST" action="{{ url_for('report_lost_person') }}" enctype="multipart/form-data">
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label for="name" class="form-label">Full Name of Missing Person *</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="age" class="form-label">Age</label>
+                            <input type="number" class="form-control" id="age" name="age" min="1" max="150">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="gender" class="form-label">Gender</label>
+                        <select class="form-select" id="gender" name="gender">
+                            <option value="">Select gender...</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Physical Description *</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" 
+                                  placeholder="Height, clothing, distinguishing features, etc." required></textarea>
+                        <small class="text-muted">Include details like height, clothing color, any unique features</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="last_seen_location" class="form-label">Last Seen Location *</label>
+                        <input type="text" class="form-control" id="last_seen_location" name="last_seen_location" 
+                               placeholder="e.g., Near Main Ghat, Sector 5" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="photo" class="form-label">Upload Photo (Recommended)</label>
+                        <input type="file" class="form-control" id="photo" name="photo" accept="image/*">
+                        <small class="text-muted">A clear recent photo greatly helps in identification</small>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="contact" class="form-label">Your Contact Number *</label>
+                        <input type="tel" class="form-control" id="contact" name="contact" 
+                               pattern="[0-9]{10}" placeholder="10-digit number" required>
+                        <small class="text-muted">We'll contact you if someone reports finding this person</small>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-telephone"></i> 
+                        <strong>Emergency:</strong> For immediate police assistance, also call local authorities at 100.
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-warning flex-fill">
+                            <i class="bi bi-send"></i> Submit Report
+                        </button>
+                        <a href="{{ url_for('lost_person_page') }}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

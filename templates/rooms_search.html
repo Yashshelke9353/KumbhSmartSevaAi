@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+
+{% block title %}Search Rooms{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+    #map_search{height:520px;border-radius:10px;margin-bottom:10px;}
+    #list_map{height:600px;border-radius:10px}
+    .room-card { transition: opacity 0.2s ease; }
+    .room-card.hidden { display: none; opacity: 0; }
+    .map-controls { display:flex; gap:8px; align-items:center; justify-content:space-between; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card p-4">
+    <h4>Find Nearby Rooms</h4>
+    <form method="get" class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label">Your location (click on map)</label>
+        </div>
+        <div class="col-md-4">
+            <div class="row g-2">
+                <div class="col-6">
+                    <input name="min_price" class="form-control" placeholder="Min price (INR)" value="{{ request.args.get('min_price','') }}">
+                </div>
+                <div class="col-6">
+                    <input name="max_price" class="form-control" placeholder="Max price (INR)" value="{{ request.args.get('max_price','') or (budget or '') }}">
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <input type="date" name="check_in" class="form-control" value="{{ check_in or '' }}">
+            <input type="date" name="check_out" class="form-control mt-2" value="{{ check_out or '' }}">
+        </div>
+        <input type="hidden" name="latitude" id="search_lat" value="{{ latitude or '' }}">
+        <input type="hidden" name="longitude" id="search_lng" value="{{ longitude or '' }}">
+        <div class="col-12">
+            <div class="map-controls mb-2">
+                <div>
+                    <small class="text-muted">Click map to pick location</small>
+                </div>
+                <div>
+                    <select id="radius_km" class="form-select form-select-sm d-inline-block" style="width:120px">
+                        <option value="0">All distances</option>
+                        <option value="1">Within 1 km</option>
+                        <option value="2">Within 2 km</option>
+                        <option value="5">Within 5 km</option>
+                        <option value="10">Within 10 km</option>
+                        <option value="20">Within 20 km</option>
+                    </select>
+                    <button type="button" id="use_location_btn" class="btn btn-sm btn-outline-primary ms-2">Use my location</button>
+                </div>
+            </div>
+            <div id="map_search"></div>
+        </div>
+        <div class="col-12">
+            <button class="btn btn-primary">Search</button>
+            <a href="{{ url_for('rooms.search_rooms') }}?show_all=1" class="btn btn-outline-secondary ms-2" id="show_all_btn">Show All Rooms</a>
+        </div>
+    </form>
+
+    {% if results %}
+    <hr>
+    <h5>Results</h5>
+    <div class="row">
+        <div class="col-md-6">
+            {% for r in results %}
+            <div class="card mb-3 p-3 room-card" data-id="{{ r.id }}" data-distance="{{ r.distance_km }}">
+                <div class="d-flex">
+                    <div class="flex-grow-1">
+                        <h6>{{ r.name }} - ₹{{ r.price_per_night }}</h6>
+                        <p class="mb-1">Owner: {{ r.owner_name }} | {{ r.phone }}</p>
+                        <p class="mb-1">Distance: {{ r.distance_km }} km</p>
+                        <p class="mb-1">Status: {% if r.available %} <span class="text-success">🟢 Available{% else %} <span class="text-danger">🔴 Booked{% endif %}</span></p>
+                    </div>
+                    <div>
+                        <a class="btn btn-outline-primary" href="{{ url_for('rooms.view_room', room_id=r.id) }}">View</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="col-md-6">
+            <div id="list_map" style="height:500px;border-radius:10px"></div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    const map = L.map('map_search').setView([19.8950, 73.7850], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(map);
+
+    let searchMarker = null;
+    map.on('click', function(e){
+        const lat = e.latlng.lat.toFixed(6);
+        const lng = e.latlng.lng.toFixed(6);
+        if(searchMarker) map.removeLayer(searchMarker);
+        searchMarker = L.marker([lat,lng]).addTo(map).bindPopup('Search location').openPopup();
+        document.getElementById('search_lat').value = lat;
+        document.getElementById('search_lng').value = lng;
+        if(typeof filterByRadius === 'function') filterByRadius();
+    });
+
+    // Use browser geolocation to fill search location
+    document.getElementById('use_location_btn').addEventListener('click', async function(){
+        if(!navigator.geolocation){
+            alert('Geolocation is not supported by your browser');
+            return;
+        }
+        this.disabled = true;
+        this.textContent = 'Detecting...';
+        navigator.geolocation.getCurrentPosition(function(pos){
+            const lat = pos.coords.latitude.toFixed(6);
+            const lng = pos.coords.longitude.toFixed(6);
+            if(searchMarker) map.removeLayer(searchMarker);
+            searchMarker = L.marker([lat,lng]).addTo(map).bindPopup('You are here').openPopup();
+            map.setView([lat,lng], 14);
+            document.getElementById('search_lat').value = lat;
+            document.getElementById('search_lng').value = lng;
+            document.getElementById('use_location_btn').textContent = 'Using my location';
+            document.getElementById('use_location_btn').disabled = false;
+            if(typeof filterByRadius === 'function') filterByRadius();
+        }, function(err){
+            alert('Unable to get your location: ' + err.message);
+            document.getElementById('use_location_btn').disabled = false;
+            document.getElementById('use_location_btn').textContent = 'Use my location';
+        }, {enableHighAccuracy:true, timeout:10000});
+    });
+
+    {% if results %}
+    const listMap = L.map('list_map').setView([{{ latitude or 19.8950 }}, {{ longitude or 73.7850 }}], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(listMap);
+    const rooms = {{ results|tojson }};
+    const markers = [];
+    rooms.forEach(r=>{
+        const marker = L.marker([r.latitude, r.longitude]).addTo(listMap);
+        marker.bindPopup(`<b>${r.name}</b><br>₹${r.price_per_night}<br><a href='${r.photo_path? r.photo_path : '#'}' target='_blank'>Photo</a><br><a href='/rooms/view/${r.id}'>View</a>`);
+        markers.push({id: r.id, marker: marker, distance: r.distance_km});
+    });
+
+    function filterByRadius(){
+        const radius = parseFloat(document.getElementById('radius_km').value);
+        const uLat = parseFloat(document.getElementById('search_lat').value) || null;
+        const uLng = parseFloat(document.getElementById('search_lng').value) || null;
+        rooms.forEach(r=>{
+            const el = document.querySelector('.room-card[data-id="'+r.id+'"]');
+            let show = true;
+            if(radius>0 && uLat && uLng){
+                const d = r.distance_km || 9999;
+                show = (d <= radius);
+            }
+            if(el){ if(show) el.classList.remove('hidden'); else el.classList.add('hidden'); }
+            const m = markers.find(x=>x.id===r.id);
+            if(m){ if(show) m.marker.addTo(listMap); else listMap.removeLayer(m.marker); }
+        });
+    }
+
+    document.getElementById('radius_km').addEventListener('change', filterByRadius);
+    // Show all rooms button: set show_all flag and submit form
+    document.getElementById('show_all_btn').addEventListener('click', function(){
+        document.getElementById('show_all_input').value = '1';
+        this.closest('form').submit();
+    });
+    {% endif %}
+</script>
+{% endblock %}

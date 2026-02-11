@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Kumbh Smart Seva{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Welcome, {{ session.user_name }}!</h2>
+
+<div class="row g-4 mb-4">
+    <!-- Quick Actions -->
+    <div class="col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="bi bi-plus-circle fs-1 text-primary mb-2"></i>
+                <h5>Add Document</h5>
+                <a href="{{ url_for('add_locker_item') }}" class="btn btn-sm btn-primary mt-2">Go</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="bi bi-exclamation-triangle fs-1 text-warning mb-2"></i>
+                <h5>Report Lost Person</h5>
+                <a href="{{ url_for('report_lost_person') }}" class="btn btn-sm btn-warning mt-2">Report</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="bi bi-person-check fs-1 text-success mb-2"></i>
+                <h5>Found Someone?</h5>
+                <a href="{{ url_for('report_found_person') }}" class="btn btn-sm btn-success mt-2">Report</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="bi bi-search fs-1 text-info mb-2"></i>
+                <h5>View All Reports</h5>
+                <a href="{{ url_for('lost_person_page') }}" class="btn btn-sm btn-info mt-2">Browse</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-folder"></i> Your Digital Locker</h5>
+            </div>
+            <div class="card-body">
+                <p class="fs-4 fw-bold text-primary mb-1">{{ locker_items|length }}</p>
+                <p class="text-muted mb-3">Documents Stored</p>
+                <a href="{{ url_for('locker_page') }}" class="btn btn-outline-primary btn-sm">View All</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0"><i class="bi bi-file-text"></i> Your Reports</h5>
+            </div>
+            <div class="card-body">
+                <p class="fs-4 fw-bold text-warning mb-1">{{ lost_reports|length }}</p>
+                <p class="text-muted mb-3">Active Reports</p>
+                <a href="{{ url_for('my_reports') }}" class="btn btn-outline-warning btn-sm">View All</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Recent Documents</h5>
+            </div>
+            <div class="card-body">
+                {% if locker_items %}
+                <div class="list-group list-group-flush">
+                    {% for item in locker_items[:5] %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">{{ item.doc_type }}</h6>
+                                <small class="text-muted">{{ item.doc_number }}</small>
+                            </div>
+                            <a href="{{ url_for('view_locker_item', item_id=item.id) }}" 
+                               class="btn btn-sm btn-outline-primary">View</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-3">No documents yet</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Your Lost Person Reports</h5>
+            </div>
+            <div class="card-body">
+                {% if lost_reports %}
+                <div class="list-group list-group-flush">
+                    {% for report in lost_reports[:5] %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">{{ report.name }}</h6>
+                                <small class="text-muted">
+                                    <span class="badge bg-{{ 'success' if report.status == 'found' else 'warning' }}">
+                                        {{ report.status|upper }}
+                                    </span>
+                                </small>
+                            </div>
+                            <a href="{{ url_for('view_lost_report', report_id=report.id) }}" 
+                               class="btn btn-sm btn-outline-primary">View</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-3">No reports yet</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

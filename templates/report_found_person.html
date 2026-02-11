@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Report Found Person - Kumbh Smart Seva{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0"><i class="bi bi-person-check"></i> Report Found Person</h4>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-success">
+                    <i class="bi bi-heart"></i> 
+                    <strong>Thank you for helping!</strong> Your report can help reunite families.
+                </div>
+                
+                <form method="POST" action="{{ url_for('report_found_person') }}" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description of Person *</label>
+                        <textarea class="form-control" id="description" name="description" rows="4" 
+                                  placeholder="Describe the person - age, gender, clothing, condition, etc." required></textarea>
+                        <small class="text-muted">Include all details that might help identify them</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="location" class="form-label">Current Location *</label>
+                        <input type="text" class="form-control" id="location" name="location" 
+                               placeholder="Where is this person now? (e.g., Police Station, Medical Camp)" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="photo" class="form-label">Upload Photo (Highly Recommended)</label>
+                        <input type="file" class="form-control" id="photo" name="photo" accept="image/*">
+                        <small class="text-muted">A photo will help families identify their loved ones</small>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="contact" class="form-label">Your Contact Number *</label>
+                        <input type="tel" class="form-control" id="contact" name="contact" 
+                               pattern="[0-9]{10}" placeholder="10-digit number" required>
+                        <small class="text-muted">For families to reach out to you</small>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-shield-check"></i> 
+                        <strong>Privacy Note:</strong> Your contact will only be shared with potential family members.
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success flex-fill">
+                            <i class="bi bi-send"></i> Submit Report
+                        </button>
+                        <a href="{{ url_for('found_persons_page') }}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}Owner Bookings{% endblock %}
+
+{% block content %}
+<div class="card p-4">
+    <h4>Owner - All Bookings</h4>
+    <table class="table table-striped">
+        <thead>
+            <tr><th>Room</th><th>Visitor</th><th>Phone</th><th>Dates</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+            {% for b in bookings %}
+            <tr>
+                <td>{{ b.room_name }} ({{ b.owner_name }})</td>
+                <td>{{ b.visitor_name }}</td>
+                <td>{{ b.visitor_phone }}</td>
+                <td>{{ b.check_in }} → {{ b.check_out }}</td>
+                <td>{{ b.status }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Volunteer Dashboard - Kumbh Smart Seva{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <h3>Welcome, {{ admin.name }} (Volunteer)</h3>
+            <p class="text-muted">Assigned tasks and recent reports are shown below.</p>
+            <div class="mt-4">
+                <a href="/lost-person" class="btn btn-secondary me-2">Browse Lost & Found</a>
+                <a href="/face-match" class="btn btn-success">Face Match</a>
+            </div>
+            <hr class="my-4">
+            <h5>Assignments</h5>
+            {% if assignments %}
+                <ul class="list-group">
+                    {% for a in assignments %}
+                    <li class="list-group-item">
+                        <strong>{{ a.location_name }}</strong> — {{ a.shift_start }} to {{ a.shift_end }}
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-muted">No assignments currently.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

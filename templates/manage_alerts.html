@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Alerts - Kumbh Smart Seva{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <h2 class="mb-4">
+        <i class="fas fa-bell"></i> Alerts & Notifications
+    </h2>
+    
+    <!-- Filter Tabs -->
+    <ul class="nav nav-pills mb-4" role="tablist">
+        <li class="nav-item" role="presentation">
+            <a class="nav-link active" data-filter="all">All Alerts</a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" data-filter="high">High Severity</a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" data-filter="medium">Medium Severity</a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" data-filter="low">Low Severity</a>
+        </li>
+    </ul>
+    
+    <!-- Alerts List -->
+    <div class="row">
+        {% if alerts %}
+            {% for alert in alerts %}
+            <div class="col-lg-6 mb-3 alert-item" data-severity="{{ alert.severity }}">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-{{ 'danger' if alert.severity == 'high' else 'warning' if alert.severity == 'medium' else 'info' }}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h5 class="mb-0 text-white">
+                                    {% if alert.severity == 'high' %}
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    {% elif alert.severity == 'medium' %}
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    {% else %}
+                                    <i class="fas fa-info-circle"></i>
+                                    {% endif %}
+                                    {{ alert.alert_type|replace('_', ' ')|title }}
+                                </h5>
+                            </div>
+                            <span class="badge bg-white text-{{ 'danger' if alert.severity == 'high' else 'warning' if alert.severity == 'medium' else 'info' }}">
+                                {{ alert.severity|upper }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body">
+                        <p class="mb-2">{{ alert.message }}</p>
+                        
+                        <div class="row text-muted" style="font-size: 13px;">
+                            <div class="col-6">
+                                <i class="fas fa-clock"></i> {{ alert.created_at }}
+                            </div>
+                            <div class="col-6">
+                                <i class="fas fa-map-marker-alt"></i> Location
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer bg-light">
+                        <form method="POST" action="/admin/alerts/{{ alert.id }}/resolve" style="display: inline;">
+                            <button type="submit" class="btn btn-sm btn-success">
+                                <i class="fas fa-check"></i> Mark Resolved
+                            </button>
+                        </form>
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#alertModal{{ alert.id }}">
+                            <i class="fas fa-info"></i> Details
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alert Details Modal -->
+            <div class="modal fade" id="alertModal{{ alert.id }}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header bg-{{ 'danger' if alert.severity == 'high' else 'warning' if alert.severity == 'medium' else 'info' }}">
+                            <h5 class="modal-title text-white">
+                                <i class="fas fa-{% if alert.severity == 'high' %}exclamation-circle{% elif alert.severity == 'medium' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+                                Alert Details
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p><strong>Alert Type:</strong> {{ alert.alert_type|replace('_', ' ')|title }}</p>
+                            <p><strong>Severity:</strong> <span class="badge bg-{{ 'danger' if alert.severity == 'high' else 'warning' if alert.severity == 'medium' else 'info' }}">{{ alert.severity|upper }}</span></p>
+                            <p><strong>Message:</strong></p>
+                            <p class="ps-2 border-start border-3 border-{{ 'danger' if alert.severity == 'high' else 'warning' if alert.severity == 'medium' else 'info' }}">{{ alert.message }}</p>
+                            <p><strong>Created:</strong> {{ alert.created_at }}</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-success text-center py-5">
+                    <i class="fas fa-check-circle" style="font-size: 48px;"></i>
+                    <h4 class="mt-3">All Clear!</h4>
+                    <p class="mb-0">No active alerts at the moment</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Stats Footer -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <h1 style="color: #FF9500;">{{ alerts|length }}</h1>
+                        <p class="text-muted mb-0">Total Active Alerts</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h1 style="color: #dc3545;">
+                            {% set high_count = alerts|selectattr('severity', 'equalto', 'high')|list|length %}
+                            {{ high_count }}
+                        </h1>
+                        <p class="text-muted mb-0">High Severity</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h1 style="color: #ffc107;">
+                            {% set medium_count = alerts|selectattr('severity', 'equalto', 'medium')|list|length %}
+                            {{ medium_count }}
+                        </h1>
+                        <p class="text-muted mb-0">Medium Severity</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h1 style="color: #17a2b8;">
+                            {% set low_count = alerts|selectattr('severity', 'equalto', 'low')|list|length %}
+                            {{ low_count }}
+                        </h1>
+                        <p class="text-muted mb-0">Low Severity</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Filter tabs functionality
+document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', (e) => {
+        // Only prevent default if it's a local filter link (has data-filter attribute)
+        if(link.dataset.filter !== undefined) {
+            e.preventDefault();
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            link.classList.add('active');
+            
+            const filter = link.dataset.filter;
+            const items = document.querySelectorAll('.alert-item');
+            
+            items.forEach(item => {
+                if (filter === 'all') {
+                    item.style.display = '';
+                } else if (item.dataset.severity === filter) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+        // Allow normal navigation for non-filter links
+    });
+});
+
+// Auto-refresh only if new alerts are detected, but don't block navigation
+let autoRefreshTimeout = null;
+
+function setupAutoRefresh() {
+    // Clear any existing timeout
+    if(autoRefreshTimeout) {
+        clearTimeout(autoRefreshTimeout);
+    }
+    
+    autoRefreshTimeout = setTimeout(() => {
+        fetch('/admin/alerts')
+            .then(r => r.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newAlerts = doc.querySelectorAll('.alert-item').length;
+                const oldAlerts = document.querySelectorAll('.alert-item').length;
+                
+                // Only reload if alert count changed and user is still on this page
+                if(newAlerts !== oldAlerts && document.visibilityState === 'visible') {
+                    location.reload();
+                } else {
+                    // Continue checking for updates
+                    setupAutoRefresh();
+                }
+            })
+            .catch(() => {
+                // If fetch fails, try again later
+                setupAutoRefresh();
+            });
+    }, 10000);
+}
+
+// Start auto-refresh
+setupAutoRefresh();
+
+// Clear the timeout when user leaves the page
+document.addEventListener('visibilitychange', () => {
+    if(document.hidden && autoRefreshTimeout) {
+        clearTimeout(autoRefreshTimeout);
+    } else if(!document.hidden) {
+        setupAutoRefresh();
+    }
+});
+</script>
+
+<style>
+.nav-pills .nav-link {
+    color: #666;
+    background-color: #f0f0f0;
+}
+
+.nav-pills .nav-link.active {
+    background: linear-gradient(135deg, #FF9500 0%, #138808 100%);
+}
+</style>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Supervisor Dashboard - Kumbh Smart Seva{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <h3>Welcome, {{ admin.name }} (Supervisor)</h3>
+            <p class="text-muted">Use the links below to manage volunteers and review Lost & Found reports.</p>
+            <div class="mt-4">
+                <a href="/admin/volunteers" class="btn btn-primary me-2">Manage Volunteers</a>
+                <a href="/lost-person" class="btn btn-secondary me-2">Lost & Found</a>
+                <a href="/face-match" class="btn btn-success">Face Match</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
