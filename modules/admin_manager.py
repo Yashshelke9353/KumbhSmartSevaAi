@@ -1,10 +1,15 @@
 import sqlite3
 from datetime import datetime, timedelta
+import os
 
 class AdminManager:
     """Manages admin users, volunteers, and their assignments"""
     
-    def __init__(self, db_path='C:\\Users\\yshel\\Downloads\\kumbh_smart_seva_v2\\kumbh_smart_seva_v2\\database\\main.db'):
+    def __init__(self, db_path=None):
+        if db_path is None:
+            base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+            db_path = os.path.join(base_dir, 'database', 'main.db')
+        os.makedirs(os.path.dirname(db_path), exist_ok=True)
         self.db_path = db_path
     
     def get_connection(self):
