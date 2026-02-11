@@ -13,6 +13,7 @@ from werkzeug.security import check_password_hash
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from database.db_manager import DatabaseManager
+import database
 from modules.admin_manager import AdminManager
 from modules.certificate_manager import CertificateManager
 from modules.face_recognition_matcher import FaceRecognitionMatcher, OPENCV_AVAILABLE
@@ -243,7 +244,7 @@ def main():
         print(f"⚠️  {total - passed} test(s) failed!")
         print("\nTroubleshooting:")
         print("1. Run: python init_sample_data.py")
-        print("2. Check: database/main.db exists")
+        print(f"2. Check: {database.DB_PATH} exists")
         print("3. Run: pip install -r requirements.txt")
     
     print("\n" + "═"*70 + "\n")

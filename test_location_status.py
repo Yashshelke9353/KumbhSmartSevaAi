@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Quick test to verify location status data display"""
 import sqlite3
+import database
 
-db_path = 'database/main.db'
+db_path = database.DB_PATH
 
 def test_location_status():
     """Test the location status query"""

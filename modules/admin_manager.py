@@ -1,14 +1,14 @@
 import sqlite3
 from datetime import datetime, timedelta
 import os
+import database
 
 class AdminManager:
     """Manages admin users, volunteers, and their assignments"""
     
     def __init__(self, db_path=None):
         if db_path is None:
-            base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-            db_path = os.path.join(base_dir, 'database', 'main.db')
+            db_path = database.DB_PATH
         os.makedirs(os.path.dirname(db_path), exist_ok=True)
         self.db_path = db_path
     

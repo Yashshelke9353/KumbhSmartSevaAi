@@ -1,9 +1,13 @@
 import sqlite3
 from datetime import datetime
 import os
+from . import DB_PATH
+
 
 class DatabaseManager:
-    def __init__(self, db_path='database/main.db'):
+    def __init__(self, db_path=None):
+        if db_path is None:
+            db_path = DB_PATH
         self.db_path = db_path
         os.makedirs(os.path.dirname(db_path), exist_ok=True)
     

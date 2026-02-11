@@ -8,8 +8,9 @@ import sqlite3
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash
 import random
+import database
 
-DB_PATH = 'database/main.db'
+DB_PATH = database.DB_PATH
 
 def get_connection():
     """Get database connection"""

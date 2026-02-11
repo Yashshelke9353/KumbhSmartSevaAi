@@ -4,14 +4,14 @@ from datetime import datetime
 import os
 from PIL import Image, ImageDraw, ImageFont
 import sqlite3
+import database
 
 class CertificateManager:
     """Manages visitor certificate generation, storage, and verification"""
     
     def __init__(self, db_path=None, upload_folder='static/uploads'):
         if db_path is None:
-            base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-            db_path = os.path.join(base_dir, 'database', 'main.db')
+            db_path = database.DB_PATH
         os.makedirs(os.path.dirname(db_path), exist_ok=True)
         self.db_path = db_path
         self.upload_folder = upload_folder

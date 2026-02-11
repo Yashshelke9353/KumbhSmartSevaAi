@@ -4,12 +4,13 @@
 import sqlite3
 import os
 from pathlib import Path
+import database
 
 print("=" * 70)
 print("🔍 DATABASE RECORDS CHECK")
 print("=" * 70)
 
-db_path = "database/main.db"
+db_path = database.DB_PATH
 
 if not os.path.exists(db_path):
     print(f"❌ Database not found: {db_path}")
