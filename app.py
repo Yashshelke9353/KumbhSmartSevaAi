@@ -41,7 +41,7 @@ if GENAI_AVAILABLE:
         try:
             genai.configure(api_key=GEMINI_API_KEY)
             model = genai.GenerativeModel('gemini-1.5-flash')
-            print("✓ Gemini API initialized successfully")
+            print("[OK] Gemini API initialized successfully")
         except Exception as e:
             print(f"Warning: Failed to initialize Gemini API: {e}")
             model = None
@@ -57,45 +57,45 @@ db = DatabaseManager()
 # This must happen here, not in if __name__ == '__main__', to work with Gunicorn on Render
 try:
     db.init_db()
-    print("✓ Database initialized successfully")
+    print("[OK] Database initialized successfully")
 except Exception as e:
-    print(f"✗ Database initialization error: {e}")
+    print(f"[ERROR] Database initialization error: {e}")
     import traceback
     traceback.print_exc()
 
 try:
     locker = DigitalLocker()
-    print("✓ DigitalLocker initialized")
+    print("[OK] DigitalLocker initialized")
 except Exception as e:
-    print(f"✗ DigitalLocker error: {e}")
+    print(f"[ERROR] DigitalLocker error: {e}")
     locker = None
 
 try:
     lost_registry = LostPersonRegistry()
-    print("✓ LostPersonRegistry initialized")
+    print("[OK] LostPersonRegistry initialized")
 except Exception as e:
-    print(f"✗ LostPersonRegistry error: {e}")
+    print(f"[ERROR] LostPersonRegistry error: {e}")
     lost_registry = None
 
 try:
     face_matcher = FaceRecognitionMatcher()
-    print("✓ FaceRecognitionMatcher initialized")
+    print("[OK] FaceRecognitionMatcher initialized")
 except Exception as e:
-    print(f"✗ FaceRecognitionMatcher error: {e}")
+    print(f"[ERROR] FaceRecognitionMatcher error: {e}")
     face_matcher = None
 
 try:
     cert_manager = CertificateManager()
-    print("✓ CertificateManager initialized")
+    print("[OK] CertificateManager initialized")
 except Exception as e:
-    print(f"✗ CertificateManager error: {e}")
+    print(f"[ERROR] CertificateManager error: {e}")
     cert_manager = None
 
 try:
     admin_manager = AdminManager()
-    print("✓ AdminManager initialized")
+    print("[OK] AdminManager initialized")
 except Exception as e:
-    print(f"✗ AdminManager error: {e}")
+    print(f"[ERROR] AdminManager error: {e}")
     admin_manager = None
 
 # Register rooms blueprint
@@ -1151,7 +1151,7 @@ Translated text:"""
                 response = model.generate_content(prompt)
                 translated_text = response.text.strip()
                 
-                print(f"✓ Translation successful via Gemini: {source_lang_name} -> {target_lang_name}")
+                print(f"[OK] Translation successful via Gemini: {source_lang_name} -> {target_lang_name}")
                 
                 return jsonify({
                     'success': True,
@@ -1195,7 +1195,7 @@ Translated text:"""
                 
             if result_data.get('responseStatus') == 200:
                 translated_text = result_data['responseData']['translatedText']
-                print(f"✓ Translation successful via MyMemory: {source_lang_name} -> {target_lang_name}")
+                print(f"[OK] Translation successful via MyMemory: {source_lang_name} -> {target_lang_name}")
                 
                 return jsonify({
                     'success': True,
