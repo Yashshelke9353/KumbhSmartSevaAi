@@ -1216,7 +1216,8 @@ Translated text:"""
             return jsonify({
                 'success': False,
                 'error': 'No internet connection. Please check your connection and try again.'
-      Database is already initialized above, before app routes definexception as fallback_error:
+            }), 503
+        except Exception as fallback_error:
             print(f"Fallback translation error: {fallback_error}")
             return jsonify({
                 'success': False,
