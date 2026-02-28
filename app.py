@@ -28,7 +28,8 @@ except ImportError as e:
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key-change-this-in-production'
+# Use environment variable for secret key, fallback to a secure random value for production
+app.secret_key = os.getenv('SECRET_KEY', os.urandom(24).hex() if os.getenv('FLASK_ENV') == 'production' else 'dev-secret-key')
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
@@ -51,17 +52,59 @@ else:
 
 # Initialize modules
 db = DatabaseManager()
-locker = DigitalLocker()
-lost_registry = LostPersonRegistry()
-face_matcher = FaceRecognitionMatcher()
-cert_manager = CertificateManager()
-admin_manager = AdminManager()
+
+# CRITICAL: Initialize database tables BEFORE any routes run
+# This must happen here, not in if __name__ == '__main__', to work with Gunicorn on Render
+try:
+    db.init_db()
+    print("✓ Database initialized successfully")
+except Exception as e:
+    print(f"✗ Database initialization error: {e}")
+    import traceback
+    traceback.print_exc()
+
+try:
+    locker = DigitalLocker()
+    print("✓ DigitalLocker initialized")
+except Exception as e:
+    print(f"✗ DigitalLocker error: {e}")
+    locker = None
+
+try:
+    lost_registry = LostPersonRegistry()
+    print("✓ LostPersonRegistry initialized")
+except Exception as e:
+    print(f"✗ LostPersonRegistry error: {e}")
+    lost_registry = None
+
+try:
+    face_matcher = FaceRecognitionMatcher()
+    print("✓ FaceRecognitionMatcher initialized")
+except Exception as e:
+    print(f"✗ FaceRecognitionMatcher error: {e}")
+    face_matcher = None
+
+try:
+    cert_manager = CertificateManager()
+    print("✓ CertificateManager initialized")
+except Exception as e:
+    print(f"✗ CertificateManager error: {e}")
+    cert_manager = None
+
+try:
+    admin_manager = AdminManager()
+    print("✓ AdminManager initialized")
+except Exception as e:
+    print(f"✗ AdminManager error: {e}")
+    admin_manager = None
 
 # Register rooms blueprint
 app.register_blueprint(rooms_bp)
 
-# Ensure upload folder exists
+# Ensure upload folders exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+os.makedirs('static/uploads/certificates', exist_ok=True)
+os.makedirs('static/uploads/qr_codes', exist_ok=True)
 
 def login_required(f):
     """Decorator to require login for certain routes"""
@@ -80,6 +123,8 @@ def login_required(f):
 def require_login_for_modules():
     exempt_endpoints = {
         'index', 'login', 'register', 'logout',
+        # Admin login routes must be publicly accessible so staff can authenticate
+        'admin_login', 'admin_logout',
         'generate_certificate_page', 'create_certificate', 'view_certificate',
         'verify_certificate', 'verify_certificate_page', 'api_verify_certificate', 'download_certificate'
     }
@@ -1171,8 +1216,7 @@ Translated text:"""
             return jsonify({
                 'success': False,
                 'error': 'No internet connection. Please check your connection and try again.'
-            }), 503
-        except Exception as fallback_error:
+      Database is already initialized above, before app routes definexception as fallback_error:
             print(f"Fallback translation error: {fallback_error}")
             return jsonify({
                 'success': False,
@@ -1183,9 +1227,23 @@ Translated text:"""
         print(f"Translation endpoint error: {str(e)}")
         return jsonify({'success': False, 'error': f'Server error: {str(e)}'}), 500
 
+# ==================== ERROR HANDLERS ====================
+
+@app.errorhandler(500)
+def internal_error(error):
+    """Handle 500 Internal Server Error and display useful information"""
+    print(f"500 Error: {error}")
+    import traceback
+    traceback.print_exc()
+    return render_template('500.html', error=str(error)), 500
+
+@app.errorhandler(404)
+def not_found_error(error):
+    """Handle 404 Not Found"""
+    return render_template('404.html'), 404
+
 if __name__ == '__main__':
-    # Initialize database
-    db.init_db()
+    # Database is already initialized above
     # Bind to localhost to avoid browser permission issues when testing on local machine
     # Access the site at http://localhost:5000
     app.run(debug=True, host='127.0.0.1', port=5000)

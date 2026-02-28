@@ -4,7 +4,13 @@ services:
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
-    plan: free
     envVars:
+      - key: FLASK_ENV
+        value: production
       - key: DATABASE_PATH
-        value: database/main.db
+        # On Render, use /tmp for ephemeral storage if no persistent volume
+        # For production, consider using a PostgreSQL database instead
+        value: /tmp/main.db
+      - key: SECRET_KEY
+        # This should be set in Render dashboard, not in code
+        sync: false
