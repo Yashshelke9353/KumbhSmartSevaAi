@@ -354,6 +354,7 @@ def report_lost_person():
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             filename = f"lost_{timestamp}_{filename}"
             photo_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            os.makedirs(os.path.dirname(photo_path), exist_ok=True)
             photo.save(photo_path)
             photo_path = filename  # Store relative path
         
@@ -389,6 +390,7 @@ def report_found_person():
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             filename = f"found_{timestamp}_{filename}"
             photo_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            os.makedirs(os.path.dirname(photo_path), exist_ok=True)
             photo.save(photo_path)
             photo_path = filename
         
