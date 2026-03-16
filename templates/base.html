@@ -106,6 +106,11 @@
                             <i class="bi bi-house-door"></i> Rooms
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('view_alerts') }}">
+                            <i class="fas fa-bell"></i> Alerts
+                        </a>
+                    </li>
                     
                     <!-- User Features -->
                     {% if session.user_id %}

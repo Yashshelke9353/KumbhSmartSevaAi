@@ -315,6 +315,14 @@ def delete_locker_item(item_id):
     
     return redirect(url_for('locker_page'))
 
+# ==================== ALERTS ROUTES ====================
+
+@app.route('/alerts')
+def view_alerts():
+    """Public alerts page"""
+    alerts = admin_manager.get_active_alerts()
+    return render_template('alerts.html', alerts=alerts)
+
 # ==================== LOST PERSON ROUTES ====================
 
 @app.route('/lost-person')
@@ -953,16 +961,17 @@ def admin_analytics():
                          peak_hours=peak_hours)
 
 @app.route('/admin/volunteers')
-@admin_role_required('supervisor')
+@admin_role_required('admin')
 def manage_volunteers():
-    """Manage volunteers"""
-    location_id = session.get('location_id')
-    volunteers = admin_manager.get_all_admins(role='volunteer', location_id=location_id)
+    """Manage volunteers and supervisors"""
+    volunteers = admin_manager.get_all_admins(role='volunteer')
+    supervisors = admin_manager.get_all_admins(role='supervisor')
     locations = admin_manager.get_all_locations()
-    assignments = admin_manager.get_volunteer_assignments(location_id=location_id)
+    assignments = admin_manager.get_volunteer_assignments()
     
     return render_template('manage_volunteers.html',
                          volunteers=volunteers,
+                         supervisors=supervisors,
                          locations=locations,
                          assignments=assignments)
 
@@ -984,6 +993,31 @@ def assign_volunteer():
     
     return redirect(url_for('manage_volunteers'))
 
+@app.route('/admin/volunteers/add', methods=['GET', 'POST'])
+@admin_role_required('admin')
+def add_volunteer():
+    """Add new volunteer or supervisor"""
+    if request.method == 'POST':
+        name = request.form.get('name')
+        email = request.form.get('email')
+        phone = request.form.get('phone')
+        password = request.form.get('password')
+        role = request.form.get('role', 'volunteer')
+        location_id = request.form.get('location_id')
+        
+        hashed = generate_password_hash(password)
+        user_id = admin_manager.create_admin_user(name, email, phone, hashed, role, location_id)
+        
+        if user_id:
+            flash(f'{role.title()} created successfully', 'success')
+        else:
+            flash('Failed to create user', 'danger')
+        
+        return redirect(url_for('manage_volunteers'))
+    
+    locations = admin_manager.get_all_locations()
+    return render_template('add_volunteer.html', locations=locations)
+
 @app.route('/admin/crowd-status/<int:location_id>')
 @admin_login_required
 def crowd_status(location_id):
@@ -1004,6 +1038,26 @@ def manage_alerts():
     alerts = admin_manager.get_active_alerts(location_id)
     
     return render_template('manage_alerts.html', alerts=alerts)
+
+@app.route('/admin/alerts/create', methods=['GET', 'POST'])
+@admin_login_required
+def create_alert():
+    """Create manual alert"""
+    if request.method == 'POST':
+        location_id = request.form.get('location_id') or session.get('location_id')
+        alert_type = request.form.get('alert_type')
+        message = request.form.get('message')
+        severity = request.form.get('severity', 'medium')
+        
+        if admin_manager.create_alert(location_id, alert_type, message, severity):
+            flash('Alert created successfully', 'success')
+        else:
+            flash('Failed to create alert', 'danger')
+        
+        return redirect(url_for('manage_alerts'))
+    
+    locations = admin_manager.get_all_locations()
+    return render_template('create_alert.html', locations=locations)
 
 @app.route('/admin/alerts/<int:alert_id>/resolve', methods=['POST'])
 @admin_login_required
