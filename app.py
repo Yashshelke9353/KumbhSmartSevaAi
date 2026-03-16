@@ -459,8 +459,8 @@ def face_match_page():
 def run_face_match():
     """Run face matching algorithm"""
     try:
-        # Get threshold from request (default 40%)
-        threshold = int(request.form.get('threshold', 40))
+        # Get threshold from request (default 70%)
+        threshold = int(request.form.get('threshold', 70))
         
         # Get all persons with photos - try multiple status options
         # First try 'lost' status, if empty try all statuses
@@ -523,7 +523,7 @@ def run_face_match():
         
         if not matches or total_matches == 0:
             # No matches at current threshold - suggest lower threshold
-            flash(f'No matches found with {threshold}% similarity threshold. Try lowering it to 20-30% for more results.', 'info')
+            flash(f'No matches found with {threshold}% similarity threshold. Try lowering it to 50-60% for more results.', 'info')
             # Show empty results page
             return render_template('face_match_results.html', 
                                  matches={},
