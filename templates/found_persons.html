@@ -28,7 +28,7 @@
                 
                 {% if person.photo_path %}
                 <div class="text-center mb-3">
-                    <img src="/static/uploads/{{ person.photo_path }}" 
+                    <img src="{{ url_for('static', filename='uploads/' + person.photo_path) }}" 
                          alt="Photo" class="img-fluid rounded" style="max-height: 200px;">
                 </div>
                 {% endif %}

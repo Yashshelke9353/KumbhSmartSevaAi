@@ -48,7 +48,7 @@
                     <div class="card-body">
                         {% if lost_report.photo_path %}
                         <div class="text-center mb-3">
-                            <img src="/static/uploads/{{ lost_report.photo_path }}" 
+                            <img src="{{ url_for('static', filename='uploads/' + lost_report.photo_path) }}" 
                                  alt="Lost person" 
                                  class="img-fluid rounded border" 
                                  style="max-height: 400px;">
@@ -102,7 +102,7 @@
                     <div class="card-body">
                         {% if found_report.photo_path %}
                         <div class="text-center mb-3">
-                            <img src="/static/uploads/{{ found_report.photo_path }}" 
+                            <img src="{{ url_for('static', filename='uploads/' + found_report.photo_path) }}" 
                                  alt="Found person" 
                                  class="img-fluid rounded border" 
                                  style="max-height: 400px;">

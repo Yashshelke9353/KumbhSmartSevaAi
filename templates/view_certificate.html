@@ -367,7 +367,7 @@
                         {% if certificate.qr_code_path %}
                         <div class="qr-container text-center">
                             <div class="qr-code-box">
-                                <img id="qrCodeImage" src="/static/uploads/qr_codes/{{ certificate.qr_code_path }}" alt="QR Code" style="display: block; visibility: visible;">
+                                <img id="qrCodeImage" src="{{ url_for('static', filename='uploads/qr_codes/' + certificate.qr_code_path) }}" alt="QR Code" style="display: block; visibility: visible;">
                             </div>
                             <p style="font-family: 'Crimson Text', serif; font-size: 12px; color: #999; margin-top: 10px;">
                                 Scan QR code to verify this certificate
